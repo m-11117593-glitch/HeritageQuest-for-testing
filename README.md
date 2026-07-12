@@ -1,5 +1,7 @@
 # HeritageQuest 🏛️✨
 
+> 📖 **New to setting this up?** Read the **[Complete Setup Guide](complete-setup.md)** — it covers everything from downloading the code to deploying with your own Supabase, Cloudflare, GitHub, and optional custom domain.
+
 ## 🌍 Deploy to a Free Public URL (share with other devices)
 
 Pick one — all are free for hobby use.
