@@ -42,7 +42,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <Link to="/scan" onClick={() => sfx.tap()} className="flex items-center gap-2 bounce-soft">
             <div className="grid size-10 place-items-center rounded-full bg-primary text-primary-foreground font-display text-lg shadow-sm">✿</div>
             <div>
-              <p className="font-display leading-none text-lg">HeritageQuest</p>
+              <p className="font-display leading-none text-lg">HeritageQuest <span className="text-[10px] font-semibold text-primary/60 ml-1">v1.0</span></p>
               <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{t("tagline")}</p>
             </div>
           </Link>
