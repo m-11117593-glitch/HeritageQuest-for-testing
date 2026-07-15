@@ -108,31 +108,42 @@ function QuizzesPage() {
             <h1 className="font-display text-3xl">{t("nav_quizzes")}</h1>
             <p className="mt-1 text-sm text-muted-foreground">{t("quiz_title")}</p>
           </div>
-          {/* Normal/Hard toggle — only visible when hard mode is unlocked */}
-          {hmUnlocked && (
-            <button
-              type="button"
-              onClick={handleHmToggle}
-              className={`relative flex items-center gap-2 rounded-full border-2 px-4 py-2 text-[11px] font-bold uppercase tracking-wider transition-all duration-300 ${
-                hmActive
-                  ? "border-red-500/40 bg-red-950/30 text-red-400 shadow-lg shadow-red-900/20"
-                  : "border-border bg-card text-muted-foreground hover:border-primary/40"
-              }`}
-            >
-              {hmActive ? (
-                <>
-                  <Skull className="size-4" />
-                  {t("hm_toggle").split(" / ")[1] || t("hm_toggle")}
-                  <Shield className="size-3.5 text-amber-500" />
-                </>
-              ) : (
-                <>
-                  <Shield className="size-4 text-primary" />
-                  {t("hm_toggle").split(" / ")[0] || t("hm_toggle")}
-                </>
-              )}
-            </button>
-          )}
+          {/* Normal/Hard toggle — always visible */}
+          <button
+            type="button"
+            onClick={() => {
+              if (hmActive || hmUnlocked) {
+                handleHmToggle();
+              } else {
+                setShowUnlock(true);
+              }
+            }}
+            className={`relative flex items-center gap-2 rounded-full border-2 px-4 py-2 text-[11px] font-bold uppercase tracking-wider transition-all duration-300 ${
+              hmActive
+                ? "border-cyan-400/50 bg-cyan-50 text-cyan-700 shadow-lg shadow-cyan-500/20"
+                : hmUnlocked
+                  ? "border-border bg-card text-muted-foreground hover:border-primary/40"
+                  : "border-dashed border-zinc-300 bg-zinc-50/50 text-zinc-400 hover:border-cyan-300 hover:text-cyan-600"
+            }`}
+          >
+            {hmActive ? (
+              <>
+                <Skull className="size-4" />
+                {t("hm_toggle").split(" / ")[1] || t("hm_toggle")}
+                <Shield className="size-3.5 text-amber-500" />
+              </>
+            ) : hmUnlocked ? (
+              <>
+                <Shield className="size-4 text-primary" />
+                {t("hm_toggle").split(" / ")[0] || t("hm_toggle")}
+              </>
+            ) : (
+              <>
+                <Skull className="size-4" />
+                {lang === "bm" ? "Buka Kunci" : "Unlock Hard"}
+              </>
+            )}
+          </button>
         </div>
       </header>
 
