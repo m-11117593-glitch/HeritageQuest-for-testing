@@ -22,6 +22,7 @@ import { CATEGORY_META, type CategoryKey } from "@/lib/museum";
 import type { ScanResult } from "@/lib/museum.functions";
 import { sfx } from "@/lib/sfx";
 import { ArtifactQuizSection } from "@/components/ArtifactQuizSection";
+import { LevelUpPopup } from "@/components/LevelUpPopup";
 import {
   Dialog,
   DialogContent,
@@ -48,6 +49,14 @@ export function ArtifactModal({ result, onClose }: Props) {
   const [showQuiz, setShowQuiz] = useState(false);
   const [localResult, setLocalResult] = useState<ScanResult>(result);
   const [quizInProgress, setQuizInProgress] = useState(false);
+  const [showLevelUp, setShowLevelUp] = useState(false);
+
+  // Show level-up popup when the result has levelUps
+  useEffect(() => {
+    if (localResult.levelUps > 0) {
+      setShowLevelUp(true);
+    }
+  }, [localResult.levelUps]);
 
   // Sync state when result prop changes (e.g. clicking different pins on map)
   useEffect(() => {
@@ -348,6 +357,14 @@ export function ArtifactModal({ result, onClose }: Props) {
           )}
         </div>
       </DialogContent>
+      {/* Level-up popup overlay */}
+      {showLevelUp && localResult.levelUps > 0 && (
+        <LevelUpPopup
+          level={localResult.level}
+          levelUps={localResult.levelUps}
+          onClose={() => setShowLevelUp(false)}
+        />
+      )}
       {lightbox &&
         typeof document !== "undefined" &&
         createPortal(

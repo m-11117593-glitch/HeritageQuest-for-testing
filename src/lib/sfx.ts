@@ -87,7 +87,16 @@ export const sfx = {
     else if (streak >= 3) vibrate([40, 20, 60]);
     else if (streak >= 2) vibrate(60);
   },
-  levelUp(){ tone(523.25, 0.1, "triangle", 0.14); tone(659.25, 0.1, "triangle", 0.14, 0.08); tone(783.99, 0.1, "triangle", 0.14, 0.16); tone(1046.5, 0.28, "triangle", 0.16, 0.24); },
+  /** Ascending celebration for level-ups — bright, triumphant arpeggio with shimmer */
+  levelUp(){
+    tone(523.25, 0.08, "triangle", 0.12);          // C5
+    tone(659.25, 0.08, "triangle", 0.13, 0.07);     // E5
+    tone(783.99, 0.08, "triangle", 0.14, 0.14);     // G5
+    tone(1046.5, 0.08, "triangle", 0.15, 0.21);     // C6
+    tone(1318.5, 0.28, "sine", 0.16, 0.28);          // E6 (held shimmer)
+    tone(1567.98, 0.20, "sine", 0.08, 0.32);         // G6 (sparkle)
+    vibrate([40, 20, 40, 20, 60]);
+  },
   coin()   { tone(987.77, 0.07, "square", 0.08); tone(1318.5, 0.18, "square", 0.09, 0.06); },
   /** Big celebratory fanfare for perfect score */
   fanfare(){ tone(659.25,0.09,"triangle",0.13); tone(880,0.09,"triangle",0.13,0.08); tone(1174.66,0.09,"triangle",0.13,0.16); tone(1567.98,0.35,"triangle",0.15,0.24); vibrate([50, 30, 50, 30, 100]); },

@@ -27,11 +27,10 @@ function ScanPage() {
     setBusy(true); setError(null);
     try {
       const res = (await scanFn({ data: { artifactId: id } })) as ScanResult;
-      // sfx by outcome
+      // sfx by outcome — LevelUpPopup handles level-up sound separately
       if (res.expGained < 0) sfx.fail();
-      else if (res.levelUps > 0) sfx.levelUp();
       else if (res.uniqueQuest?.kind === "activeCorrectComplete") sfx.fanfare();
-      else sfx.success();
+      else if (!res.levelUps) sfx.success();
       if (res.newBadges.length) setTimeout(() => sfx.coin(), 400);
       setResult(res);
       qc.invalidateQueries();

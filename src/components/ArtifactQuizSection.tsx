@@ -26,6 +26,7 @@ interface Props {
 }
 
 import { FeedbackPopup, ConfettiBurst, PulseRing, ComboMeter } from "@/components/quiz-animations";
+import { LevelUpPopup } from "@/components/LevelUpPopup";
 
 /* ── Main Quiz Section ── */
 export function ArtifactQuizSection({
@@ -372,6 +373,14 @@ export function ArtifactQuizSection({
               </span>
             </div>
           </div>
+        )}
+
+        {/* Level-up popup */}
+        {finalCompletion.levelUps > 0 && (
+          <LevelUpPopup
+            level={finalCompletion.level}
+            levelUps={finalCompletion.levelUps}
+          />
         )}
 
         {/* Rewards */}

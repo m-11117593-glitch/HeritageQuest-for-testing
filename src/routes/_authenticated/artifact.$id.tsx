@@ -9,6 +9,7 @@ import { artifactImageUrl } from "@/lib/artifact-images";
 import { scanArtifact, type ScanResult } from "@/lib/museum.functions";
 import { sfx } from "@/lib/sfx";
 import { ArtifactQuizSection } from "@/components/ArtifactQuizSection";
+import { LevelUpPopup } from "@/components/LevelUpPopup";
 
 export const Route = createFileRoute("/_authenticated/artifact/$id")({
   component: ArtifactPage,
@@ -59,8 +60,8 @@ function ArtifactPage() {
     try {
       const res = (await scanFn({ data: { artifactId: id } })) as ScanResult;
       setResult(res);
-      if (res.levelUps > 0) sfx.levelUp();
-      else sfx.success();
+      // LevelUpPopup handles the level-up sound separately
+      if (!res.levelUps) sfx.success();
       if (res.newBadges.length > 0) setTimeout(() => sfx.coin(), 400);
       qc.invalidateQueries();
       router.invalidate();
@@ -190,16 +191,23 @@ function ArtifactPage() {
 function RewardSummary({ result }: { result: ScanResult }) {
   const { t, lang } = useI18n();
   return (
-    <div className="space-y-3 pop-in">
-      <p className="font-display text-3xl text-primary">
-        +{result.expGained} {t("exp")} ✨
-      </p>
+    <>
       {result.levelUps > 0 && (
-        <div className="flex items-center gap-2 text-sm">
-          <TrendingUp className="size-4 text-gold" />
-          {t("level_up")} → Lv. {result.level} (+{result.pointsGained} {t("points")})
-        </div>
+        <LevelUpPopup
+          level={result.level}
+          levelUps={result.levelUps}
+        />
       )}
+      <div className="space-y-3 pop-in">
+        <p className="font-display text-3xl text-primary">
+          +{result.expGained} {t("exp")} ✨
+        </p>
+        {result.levelUps > 0 && (
+          <div className="flex items-center gap-2 text-sm">
+            <TrendingUp className="size-4 text-gold" />
+            {t("level_up")} → Lv. {result.level} (+{result.pointsGained} {t("points")})
+          </div>
+        )}
       {result.newQuests.length > 0 && (
         <div className="flex items-center gap-2 text-sm">
           <Flag className="size-4 text-jungle" />
@@ -218,5 +226,6 @@ function RewardSummary({ result }: { result: ScanResult }) {
           : "Recorded. Head back to the map."}
       </p>
     </div>
+    </>
   );
 }

@@ -261,6 +261,17 @@
   100% { opacity: 0; transform: translateY(var(--fall, -120px)) scale(0.3) rotate(var(--spin, 360deg)); }
 }
 
+/** Floating particles for level-up popup — circles that float up with drift */
+@utility animate-float-up {
+  animation: float-up 3s ease-out infinite;
+}
+@keyframes float-up {
+  0%   { opacity: 0; transform: translateY(0) translateX(0) scale(0); }
+  15%  { opacity: 0.8; transform: translateY(-15px) translateX(var(--drift, 0)) scale(1); }
+  85%  { opacity: 0.6; transform: translateY(calc(var(--fall, -120px) * 0.85)) translateX(var(--drift, 0)) scale(0.8); }
+  100% { opacity: 0; transform: translateY(var(--fall, -120px)) translateX(var(--drift, 0)) scale(0.3); }
+}
+
 /** Pulse glow ring that radiates on correct answer */
 @utility pulse-glow {
   animation: pulse-glow 0.8s ease-out both;
