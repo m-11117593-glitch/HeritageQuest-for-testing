@@ -184,6 +184,17 @@ const STRINGS = {
   quiz_empty_title: { bm: "Tiada Kuiz Tersedia", en: "No Quizzes Yet" },
   quiz_empty_sub: { bm: "Imbas artifak pertama anda untuk membuka kunci kuiz.", en: "Scan your first artifact to unlock quizzes." },
   quiz_empty_cta: { bm: "Mula Imbas", en: "Start Scanning" },
+  // Hard mode
+  hm_toggle: { bm: "BIASA / SUKAR", en: "NORMAL / HARD" },
+  hm_label: { bm: "Mod Sukar", en: "Hard Mode" },
+  hm_unlock_title: { bm: "Mod Sukar Menanti!", en: "Hard Mode Awaits!" },
+  hm_unlock_body: { bm: "Anda membuktikan kebolehan! Masuk mod sukar untuk soalan lebih mencabar dan EXP bonus. Sedia?", en: "You've proven your skill! Enter hard mode for tougher questions and bonus EXP. Ready?" },
+  hm_unlock_accept: { bm: "Ya — Saya Sedia!", en: "Yes — I'm Ready!" },
+  hm_unlock_decline: { bm: "Tidak — Teroka Dulu", en: "No — Explore First" },
+  hm_unlock_locked: { bm: "Selesaikan 2 kuiz dengan skor ≥3/5 untuk buka kunci", en: "Complete 2 quizzes with score ≥3/5 to unlock" },
+  hm_quiz_title: { bm: "Kuiz Sukar", en: "Hard Quiz" },
+  hm_exp_bonus: { bm: "Bonus Mod Sukar", en: "Hard Mode Bonus" },
+  hm_dark_hint: { bm: "Mod sukar aktif — fokus dan jawab dengan tepat!", en: "Hard mode active — focus and answer precisely!" },
 } as const;
 
 export type StringKey = keyof typeof STRINGS;

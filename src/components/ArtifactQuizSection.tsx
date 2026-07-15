@@ -10,6 +10,7 @@ import {
   Award,
   ArrowRight,
   Star,
+  Skull,
 } from "lucide-react";
 import { buildArtifactQuiz, type ArtifactQuizArtifact } from "@/lib/artifact-quizzes";
 import { useI18n } from "@/lib/i18n";
@@ -23,6 +24,8 @@ interface Props {
   completion: ScanResult | null;
   onCompleted?: (result: ScanResult) => void;
   onInProgressChange?: (v: boolean) => void;
+  hardMode?: boolean;
+  onHardModeUnlock?: () => void;
 }
 
 import { FeedbackPopup, ConfettiBurst, PulseRing, ComboMeter } from "@/components/quiz-animations";
@@ -35,11 +38,14 @@ export function ArtifactQuizSection({
   completion,
   onCompleted,
   onInProgressChange,
+  hardMode = false,
+  onHardModeUnlock,
 }: Props) {
   const { t, lang } = useI18n();
   const qc = useQueryClient();
   const submitQuiz = useServerFn(scanArtifact);
-  const questions = useMemo(() => buildArtifactQuiz(artifact), [artifact]);
+  const questions = useMemo(() => buildArtifactQuiz(artifact, hardMode), [artifact, hardMode]);
+  const isHardMode = hardMode === true;
 
   const [started, setStarted] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -132,7 +138,8 @@ export function ArtifactQuizSection({
   const correctCount = [...answers, ...(selectedIndex === null ? [] : [selectedIndex])].reduce(
     (total, answer, index) => total + (answer === questions[index].correctIndex ? 1 : 0),
     0,
-  );      // Track when a new correct answer is added (avoid spurious confetti)
+  );
+  // Track when a new correct answer is added (avoid spurious confetti)
   useEffect(() => {
     const diff = correctCount - prevCorrectCount.current;
     if (diff > 0) {
@@ -167,6 +174,8 @@ export function ArtifactQuizSection({
       // Play escalating combo sound based on streak
       if (newStreak >= 2) {
         sfx.combo(newStreak);
+      } else if (isHardMode) {
+        sfx.hardCorrect();
       } else {
         sfx.success();
       }
@@ -181,7 +190,11 @@ export function ArtifactQuizSection({
       setStreak(0);
       setStreakKey((k) => k + 1);
 
-      sfx.error();
+      if (isHardMode) {
+        sfx.hardWrong();
+      } else {
+        sfx.error();
+      }
       setFeedbackType("wrong");
       setFeedbackKey((k) => k + 1);
       // After the wrong feedback settles, reveal the correct answer
@@ -221,10 +234,30 @@ export function ArtifactQuizSection({
       (total, answer, index) => total + (answer === questions[index].correctIndex ? 1 : 0),
       0,
     );
-    // Check if the hardest (Q5) question was answered correctly
+    const totalQuestions = nextAnswers.length;
+
+    // Track quiz completion for hard mode unlock (normal mode only)
+    if (!isHardMode) {
+      try {
+        const completed = JSON.parse(localStorage.getItem('quiz-scores') || '[]') as number[];
+        completed.push(finalCorrectCount);
+        localStorage.setItem('quiz-scores', JSON.stringify(completed.slice(-5)));
+        // Check unlock condition: 2 quizzes with avg >= 3/5
+        if (completed.length >= 2) {
+          const recentTwo = completed.slice(-2);
+          const avg = recentTwo.reduce((a, b) => a + b, 0) / recentTwo.length;
+          if (avg >= 3) {
+            localStorage.setItem('hm-unlocked', 'true');
+            onHardModeUnlock?.();
+          }
+        }
+      } catch { /* noop */ }
+    }
+
+    // Check if the hardest question was answered correctly
     const lastQ = questions[questions.length - 1];
     const lastAns = nextAnswers[nextAnswers.length - 1];
-    const hardCorrect = lastQ?.difficulty === 5 && lastAns === lastQ?.correctIndex;
+    const hardCorrect = lastQ?.difficulty >= 4 && lastAns === lastQ?.correctIndex;
 
     setSubmitting(true);
     setSubmitError(null);
@@ -235,14 +268,17 @@ export function ArtifactQuizSection({
           data: {
             artifactId: artifact.id,
             correctCount: finalCorrectCount,
+            totalQuestions: totalQuestions,
             hardCorrect,
           },
         })) as ScanResult;
 
         if (finalCorrectCount === questions.length) {
-          sfx.fanfare();
+          if (isHardMode) sfx.hardFanfare();
+          else sfx.fanfare();
         } else {
-          sfx.success();
+          if (isHardMode) sfx.hardCorrect();
+          else sfx.success();
         }
 
         await qc.invalidateQueries();
@@ -406,24 +442,33 @@ export function ArtifactQuizSection({
   }
 
   /* ── Active quiz ── */
+
   return (
-    <section className="relative game-card overflow-hidden">
+    <section className={`relative overflow-hidden rounded-2xl border-2 ${isHardMode ? "border-red-500/20 bg-zinc-950 shadow-lg shadow-red-950/30" : "game-card"}`}>
       {/* Feedback popup overlay */}
       {feedbackType && <FeedbackPopup key={feedbackKey} type={feedbackType} />}
 
       {/* Gradient header bar with category emoji + streak meter */}
-      <div className="flex items-center gap-3 border-b border-border bg-gradient-to-br from-accent to-secondary/60 px-6 py-4">
+      <div className={`flex items-center gap-3 border-b px-6 py-4 ${isHardMode ? "border-red-900/30 bg-gradient-to-br from-zinc-900 via-zinc-950 to-slate-900" : "border-border bg-gradient-to-br from-accent to-secondary/60"}`}>
         <span
           className="grid size-10 shrink-0 place-items-center rounded-full text-lg wiggle"
           style={{ background: catMeta.bg, color: catMeta.color }}
         >
           {catMeta.emoji}
         </span>
-        <div className="min-w-0 flex-1 flex items-center gap-2">
-          <div className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-primary">
-            <HelpCircle className="size-4" />
-            {t("quiz_title")}
-          </div>
+        <div className="min-w-0 flex-1 flex items-center gap-2">            <div className={`flex items-center gap-2 text-sm font-bold uppercase tracking-widest ${isHardMode ? "text-red-400" : "text-primary"}`}>
+              {isHardMode ? (
+                <>
+                  <Skull className="size-4" />
+                  {t("hm_quiz_title")}
+                </>
+              ) : (
+                <>
+                  <HelpCircle className="size-4" />
+                  {t("quiz_title")}
+                </>
+              )}
+            </div>
           {/* Combo meter badge */}
           <ComboMeter streak={streak} animKey={streakKey} />
         </div>
@@ -442,7 +487,7 @@ export function ArtifactQuizSection({
           }`}
           key={currentIndex + (transitionDir === "in" ? "-in" : "-out")}
         >
-          <p className="text-lg font-semibold leading-snug text-ink">
+          <p className={`text-lg font-semibold leading-snug ${isHardMode ? "text-zinc-100" : "text-ink"}`}>
             {lang === "bm" ? currentQuestion.prompt.bm : currentQuestion.prompt.en}
           </p>
           {/* Difficulty indicator */}
@@ -515,8 +560,9 @@ export function ArtifactQuizSection({
               stateClass =
                 "border-jungle bg-jungle/15 text-jungle ring-2 ring-jungle/30 shadow-[0_0_12px_-3px_var(--color-jungle)] bounce-celebrate";
             } else {
-              stateClass =
-                "border-border bg-card transition-[border-color,background,box-shadow] duration-200 ease-[var(--ease-out)] hover:border-primary/50 hover:bg-primary/5 hover:shadow-md";
+              stateClass = isHardMode
+                ? "border-zinc-700 bg-zinc-900 text-zinc-300 transition-[border-color,background,box-shadow] duration-200 ease-[var(--ease-out)] hover:border-red-500/40 hover:bg-red-950/10 hover:shadow-md"
+                : "border-border bg-card transition-[border-color,background,box-shadow] duration-200 ease-[var(--ease-out)] hover:border-primary/50 hover:bg-primary/5 hover:shadow-md";
             }
 
             // Add shaking to wrong selection
@@ -572,12 +618,9 @@ export function ArtifactQuizSection({
       </div>
 
       {/* Progress bar + Next button */}
-      {(showNext || selectedIndex !== null) && (
-        <div
-          className={`px-6 pb-6 pt-5 ${
+      {(showNext || selectedIndex !== null) && (          <div className={`px-6 pb-6 pt-5 ${isHardMode ? "bg-zinc-950/50" : ""} ${
             showNext ? "animate-in fade-in slide-in-from-bottom-2 duration-300" : ""
-          }`}
-        >
+          }`}>
           {/* Progress bar matching ExpBar style */}
           <div className="mb-5 flex gap-1">
             {questions.map((_, i) => {
@@ -659,7 +702,11 @@ export function ArtifactQuizSection({
               type="button"
               onClick={handleNext}
               disabled={submitting}
-              className="bounce-soft flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-primary to-gold px-6 py-4 font-bold text-primary-foreground shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 active:scale-95 disabled:opacity-60 disabled:hover:shadow-lg animate-in fade-in slide-in-from-bottom-2"
+              className={`bounce-soft flex w-full items-center justify-center gap-2 rounded-2xl px-6 py-4 font-bold shadow-lg animate-in fade-in slide-in-from-bottom-2 ${
+                isHardMode
+                  ? "bg-gradient-to-r from-red-700 to-amber-800 text-white shadow-red-900/25 hover:shadow-xl hover:shadow-red-900/30"
+                  : "bg-gradient-to-r from-primary to-gold text-primary-foreground shadow-primary/25 hover:shadow-xl hover:shadow-primary/30"
+              } active:scale-95 disabled:opacity-60 disabled:hover:shadow-lg`}
             >
               {submitting ? (
                 <span className="inline-block size-5 animate-spin rounded-full border-2 border-primary-foreground/30 border-t-primary-foreground" />

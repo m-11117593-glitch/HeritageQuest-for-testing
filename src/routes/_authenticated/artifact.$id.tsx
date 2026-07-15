@@ -45,6 +45,7 @@ function ArtifactPage() {
   const scanFn = useServerFn(scanArtifact);
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<ScanResult | null>(null);
+  const hardMode = typeof window !== "undefined" ? localStorage.getItem('hm-unlocked') === 'true' && localStorage.getItem('hm-active') === 'true' : false;
 
   const { data, isLoading } = useQuery({
     queryKey: ["artifact", id],
@@ -170,6 +171,10 @@ function ArtifactPage() {
                 alreadyCompleted={false}
                 completion={null}
                 onCompleted={setResult}
+                hardMode={hardMode}
+                onHardModeUnlock={() => {
+                  // Hard mode unlock handled via localStorage; next quizzes page visit shows popup
+                }}
               />
             </div>
           ) : (

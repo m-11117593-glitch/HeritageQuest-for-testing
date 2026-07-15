@@ -62,6 +62,7 @@ export interface ScanResult {
 const scanInput = z.object({ 
   artifactId: z.string().min(1),
   correctCount: z.number().min(0).max(10).optional(),
+  totalQuestions: z.number().min(0).max(10).optional(),
   hardCorrect: z.boolean().optional()
 });
 
@@ -190,7 +191,7 @@ export const scanArtifact = createServerFn({ method: "POST" })
           artifact_id: artifact.id, 
           exp_earned: expEarned,
           quiz_correct_count: data.correctCount ?? null,
-          quiz_total_questions: data.correctCount !== undefined ? 5 : null,
+          quiz_total_questions: data.totalQuestions ?? (data.correctCount !== undefined ? 5 : null),
           quiz_completed_at: data.correctCount !== undefined ? new Date().toISOString() : null
         });
       if (insErr) throw new Error(insErr.message);
@@ -200,7 +201,7 @@ export const scanArtifact = createServerFn({ method: "POST" })
         .update({ 
           exp_earned: (prior.exp_earned ?? 0) + expEarned,
           quiz_correct_count: data.correctCount,
-          quiz_total_questions: 5,
+          quiz_total_questions: data.totalQuestions ?? 5,
           quiz_completed_at: new Date().toISOString()
         })
         .eq("user_id", userId)
@@ -345,7 +346,7 @@ export const scanArtifact = createServerFn({ method: "POST" })
       newQuests,
       newAchievements,
       quizCorrectCount: data.correctCount ?? (prior?.quiz_correct_count ?? null),
-      quizTotalQuestions: data.correctCount !== undefined ? 5 : (prior?.quiz_total_questions ?? null),
+      quizTotalQuestions: data.totalQuestions ?? (data.correctCount !== undefined ? 5 : (prior?.quiz_total_questions ?? null)),
       hardCorrectBonus: data.hardCorrect === true,
       uniqueQuest: uqSummary,
       offeredUniqueQuest: offered,

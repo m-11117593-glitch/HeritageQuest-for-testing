@@ -104,6 +104,34 @@ export const sfx = {
   error()  { wrongBuzz(); vibrate([30, 20, 30]); },
   fail()   { tone(330, 0.14, "sawtooth", 0.14); tone(220, 0.28, "sawtooth", 0.14, 0.1); tone(110, 0.4, "sawtooth", 0.12, 0.22); },
   scanBeep(){ tone(1200, 0.05, "square", 0.05); },
+
+  /** Hard mode correct — deep, ominous but satisfying chime */
+  hardCorrect() {
+    tone(196, 0.15, "triangle", 0.12);       // G3 (deep)
+    tone(293.66, 0.15, "triangle", 0.10, 0.10); // D4
+    tone(392, 0.15, "sine", 0.12, 0.20);      // G4
+    tone(587.33, 0.30, "sine", 0.10, 0.30);   // D5 (held)
+    tone(783.99, 0.18, "sine", 0.06, 0.40);   // G5 (shimmer)
+    vibrate([60, 20, 40]);
+  },
+  /** Hard mode wrong — deep, menacing descending growl */
+  hardWrong() {
+    tone(280, 0.15, "sawtooth", 0.10);
+    tone(200, 0.15, "sawtooth", 0.09, 0.10);
+    tone(140, 0.25, "sawtooth", 0.08, 0.20);
+    tone(100, 0.30, "square", 0.06, 0.30);
+    vibrate([30, 20, 50]);
+  },
+  /** Hard mode fanfare — dark triumphant for perfect hard quiz */
+  hardFanfare() {
+    tone(392, 0.10, "triangle", 0.12);        // G4
+    tone(493.88, 0.10, "triangle", 0.12, 0.08); // B4
+    tone(587.33, 0.10, "triangle", 0.14, 0.16); // D5
+    tone(783.99, 0.30, "sine", 0.16, 0.24);     // G5 (held)
+    tone(987.77, 0.20, "sine", 0.08, 0.30);     // B5 (sparkle)
+    tone(1174.66, 0.15, "sine", 0.06, 0.35);    // D6
+    vibrate([50, 30, 50, 30, 80]);
+  },
 };
 
 if (typeof window !== "undefined") sfx.init();

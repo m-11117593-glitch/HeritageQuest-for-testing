@@ -1,11 +1,13 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Award, Sparkles, CheckCircle2, ArrowRight, Brain, Star, Zap, Scan, QrCode } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Award, Sparkles, CheckCircle2, ArrowRight, Brain, Star, Zap, Scan, QrCode, Skull, Shield } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
 import { artifactImageUrl } from "@/lib/artifact-images";
 import { CATEGORY_META, ZONE_LAYOUT, type CategoryKey } from "@/lib/museum";
 import { sfx } from "@/lib/sfx";
+import { HardModeUnlockPopup } from "@/components/HardModeUnlockPopup";
 
 export const Route = createFileRoute("/_authenticated/quizzes")({
   component: QuizzesPage,
@@ -28,6 +30,40 @@ async function fetchQuizzes() {
 function QuizzesPage() {
   const { t, lang } = useI18n();
   const navigate = useNavigate();
+  const [hmActive, setHmActive] = useState(() =>
+    typeof window !== "undefined" ? localStorage.getItem('hm-active') === 'true' : false
+  );
+  const [showUnlock, setShowUnlock] = useState(false);
+  const hmUnlocked = typeof window !== "undefined" ? localStorage.getItem('hm-unlocked') === 'true' : false;
+
+  useEffect(() => {
+    // Check if unlock just happened
+    if (hmUnlocked && !hmActive && !showUnlock) {
+      const alreadyShown = localStorage.getItem('hm-shown-popup');
+      if (!alreadyShown) {
+        setShowUnlock(true);
+        localStorage.setItem('hm-shown-popup', 'true');
+      }
+    }
+  }, [hmUnlocked, hmActive, showUnlock]);
+
+  function handleHmToggle() {
+    const next = !hmActive;
+    setHmActive(next);
+    localStorage.setItem('hm-active', next ? 'true' : 'false');
+    if (next) sfx.hardFanfare();
+    else sfx.pop();
+  }
+
+  function handleHardModeAccept() {
+    setShowUnlock(false);
+    setHmActive(true);
+    localStorage.setItem('hm-active', 'true');
+  }
+
+  function handleHardModeDecline() {
+    setShowUnlock(false);
+  }
   const { data } = useQuery({ queryKey: ["quizzes"], queryFn: fetchQuizzes });
   const artifacts = data?.artifacts ?? [];
   const progressMap = data?.progressMap ?? new Map<string, any>();
@@ -57,10 +93,47 @@ function QuizzesPage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-8">
+      {/* Hard mode unlock popup */}
+      {showUnlock && (
+        <HardModeUnlockPopup
+          onAccept={handleHardModeAccept}
+          onDecline={handleHardModeDecline}
+        />
+      )}
+
       <header className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-        <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">{t("nav_quizzes")}</p>
-        <h1 className="font-display text-3xl">{t("nav_quizzes")}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">{t("quiz_title")}</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground">{t("nav_quizzes")}</p>
+            <h1 className="font-display text-3xl">{t("nav_quizzes")}</h1>
+            <p className="mt-1 text-sm text-muted-foreground">{t("quiz_title")}</p>
+          </div>
+          {/* Normal/Hard toggle — only visible when hard mode is unlocked */}
+          {hmUnlocked && (
+            <button
+              type="button"
+              onClick={handleHmToggle}
+              className={`relative flex items-center gap-2 rounded-full border-2 px-4 py-2 text-[11px] font-bold uppercase tracking-wider transition-all duration-300 ${
+                hmActive
+                  ? "border-red-500/40 bg-red-950/30 text-red-400 shadow-lg shadow-red-900/20"
+                  : "border-border bg-card text-muted-foreground hover:border-primary/40"
+              }`}
+            >
+              {hmActive ? (
+                <>
+                  <Skull className="size-4" />
+                  {t("hm_toggle").split(" / ")[1] || t("hm_toggle")}
+                  <Shield className="size-3.5 text-amber-500" />
+                </>
+              ) : (
+                <>
+                  <Shield className="size-4 text-primary" />
+                  {t("hm_toggle").split(" / ")[0] || t("hm_toggle")}
+                </>
+              )}
+            </button>
+          )}
+        </div>
       </header>
 
       {/* Overview stats */}
