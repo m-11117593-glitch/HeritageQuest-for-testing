@@ -345,6 +345,144 @@
   100% { transform: scale(1) rotate(0deg); }
 }
 
+/* ── Hard Mode: Fluorescent cyan border on warm light background ── */
+
+/** Fluorescent cyan-blue pulsing border */
+@utility hm-red-border {
+  border: 2px solid oklch(0.7 0.18 220 / 0.6);
+  box-shadow:
+    0 0 20px -2px oklch(0.75 0.2 210 / 0.35),
+    0 0 50px -10px oklch(0.7 0.18 220 / 0.15),
+    inset 0 0 25px -6px oklch(0.75 0.2 210 / 0.08);
+  animation: hm-border-pulse 2s ease-in-out infinite;
+}
+@keyframes hm-border-pulse {
+  0%, 100% { border-color: oklch(0.7 0.18 220 / 0.6); box-shadow: 0 0 20px -2px oklch(0.75 0.2 210 / 0.35), 0 0 50px -10px oklch(0.7 0.18 220 / 0.15), inset 0 0 25px -6px oklch(0.75 0.2 210 / 0.08); }
+  50%      { border-color: oklch(0.78 0.2 200 / 0.8); box-shadow: 0 0 35px -2px oklch(0.8 0.22 195 / 0.5), 0 0 70px -10px oklch(0.75 0.2 210 / 0.25), inset 0 0 35px -6px oklch(0.8 0.22 195 / 0.12); }
+}
+
+/** Warm light card background — no blue taint */
+@utility hm-card-bg {
+  background: linear-gradient(160deg, oklch(0.82 0.01 60) 0%, oklch(0.78 0.008 60) 50%, oklch(0.74 0.006 60) 100%);
+  border-radius: inherit;
+}
+
+/** Warm light header — no blue taint */
+@utility hm-header-bg {
+  background: linear-gradient(135deg, oklch(0.85 0.012 60) 0%, oklch(0.80 0.01 60) 60%, oklch(0.76 0.008 60) 100%);
+  border-bottom: 1px solid oklch(0.6 0.02 60 / 0.25);
+}
+
+/** Subtle warm ambient glow behind card */
+@utility hm-ambient-glow {
+  position: relative;
+}
+@utility hm-ambient-glow {
+  &::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 80%;
+    height: 70%;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(ellipse, oklch(0.9 0.01 60 / 0.15), transparent 70%);
+    pointer-events: none;
+  }
+}
+
+/** Light option button with subtle cyan border hint */
+@utility hm-option-btn {
+  border-color: oklch(0.7 0.18 220 / 0.3);
+  background: oklch(0.92 0.008 60);
+  color: oklch(0.25 0.02 270);
+  transition: all 200ms cubic-bezier(.34,1.56,.64,1);
+}
+@utility hm-option-btn {
+  @media (hover: hover) and (pointer: fine) {
+    &:hover {
+      border-color: oklch(0.75 0.22 205 / 0.6);
+      background: oklch(0.95 0.02 60 / 0.5);
+      box-shadow: 0 0 22px -4px oklch(0.75 0.22 205 / 0.3);
+      transform: translateY(-1px);
+      color: oklch(0.15 0.04 230);
+    }
+  }
+}
+
+/** Fluorescent cyan-blue gradient Next/Finish button */
+@utility hm-next-btn {
+  background: linear-gradient(135deg, oklch(0.6 0.2 210), oklch(0.55 0.18 220) 50%, oklch(0.5 0.15 230));
+  color: white;
+  text-shadow: 0 1px 6px oklch(0 0 0 / 0.4);
+  box-shadow: 0 4px 20px -2px oklch(0.6 0.2 210 / 0.4);
+  transition: all 200ms cubic-bezier(.34,1.56,.64,1);
+}
+@utility hm-next-btn {
+  @media (hover: hover) and (pointer: fine) {
+    &:hover:not(:disabled) {
+      box-shadow: 0 6px 30px -2px oklch(0.65 0.22 205 / 0.55);
+      transform: translateY(-2px);
+    }
+  }
+  &:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+}
+
+/* ── Hard Mode: Splash particle burst ── */
+@utility splash-particle {
+  animation: splash-particle 0.9s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+@keyframes splash-particle {
+  0%   { opacity: 1; transform: translate(0, 0) scale(1); }
+  70%  { opacity: 0.8; }
+  100% { opacity: 0; transform: translate(var(--splash-x, 40px), var(--splash-y, -60px)) scale(0.2); }
+}
+
+/** Fluorescent cyan-blue glow pulse for correct answers */
+@utility hm-glow-pulse {
+  animation: hm-glow-pulse 1.2s ease-in-out infinite;
+}
+@keyframes hm-glow-pulse {
+  0%, 100% { box-shadow: 0 0 12px -2px oklch(0.72 0.2 210 / 0.4); }
+  50%      { box-shadow: 0 0 30px -2px oklch(0.78 0.22 200 / 0.65), 0 0 60px -8px oklch(0.7 0.18 220 / 0.3); }
+}
+
+/** Warm light ambient bg behind quiz area — no blue taint */
+@utility hm-ambient-bg {
+  background: linear-gradient(180deg, oklch(0.80 0.01 60), oklch(0.76 0.008 60), oklch(0.72 0.006 60));
+}
+
+/** Subtle diagonal pattern overlay for hard mode cards */
+@utility hm-pattern {
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent 0px,
+    transparent 12px,
+    oklch(0 0 0 / 0.02) 12px,
+    oklch(0 0 0 / 0.02) 13px
+  );
+}
+
+/** Glow ring around category emoji in hard mode */
+@keyframes hm-emoji-pulse {
+  0%, 100% { box-shadow: 0 0 8px -2px oklch(0.7 0.18 220 / 0.2); transform: scale(1); }
+  50%      { box-shadow: 0 0 20px -2px oklch(0.75 0.2 210 / 0.4); transform: scale(1.05); }
+}
+@utility hm-emoji-ring {
+  animation: hm-emoji-pulse 2.5s ease-in-out infinite;
+}
+
+/** Floating decorative sparkle for hard mode */
+@keyframes hm-sparkle-float {
+  0%, 100% { opacity: 0.3; transform: translateY(0) scale(0.8); }
+  50%      { opacity: 1; transform: translateY(-6px) scale(1.2); }
+}
+@utility hm-float-sparkle {
+  animation: hm-sparkle-float 3s ease-in-out infinite;
+}
+
 /* ── Original animations ── */
 @keyframes pop-in     { 0% { opacity: 0; transform: scale(0.9) translateY(6px); } 100% { opacity: 1; transform: scale(1) translateY(0); } }
 @keyframes float-y    { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }

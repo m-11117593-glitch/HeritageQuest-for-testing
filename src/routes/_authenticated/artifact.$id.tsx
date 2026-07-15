@@ -102,22 +102,22 @@ function ArtifactPage() {
         <ArrowLeft className="size-4" /> {t("back")}
       </Link>
 
-      <article className={`overflow-hidden rounded-2xl border-2 ${hardMode ? "border-red-500/20 bg-zinc-950 shadow-lg shadow-red-950/30" : "paper-card"}`}>
+      <article className={`overflow-hidden rounded-2xl ${hardMode ? "hm-card-bg hm-ambient-glow hm-red-border shadow-lg shadow-cyan-500/20" : "paper-card"}`}>
         {/* Cute rounded header */}
-        <div className={`relative border-b px-6 py-8 ${hardMode ? "border-red-900/30 bg-gradient-to-br from-zinc-900 via-zinc-950 to-slate-900" : "border-border bg-gradient-to-br from-accent to-secondary"}`}>
+        <div className={`relative border-b px-6 py-8 ${hardMode ? "hm-header-bg" : "border-border bg-gradient-to-br from-accent to-secondary"}`}>
           <div className="absolute inset-x-4 top-4 flex justify-between text-[10px] uppercase tracking-[0.35em] text-muted-foreground">
             <span>{t("tagline")}</span>
             <span>№ {artifact.sort_order.toString().padStart(3, "0")}</span>
           </div>
-          <p className={`mt-6 text-xs font-semibold uppercase tracking-[0.3em] ${hardMode ? "text-red-400" : "text-primary"}`}>
+          <p className={`mt-6 text-xs font-semibold uppercase tracking-[0.3em] ${hardMode ? "text-cyan-400 drop-shadow-[0_0_6px_rgba(34,211,238,0.3)]" : "text-primary"}`}>
             {t(`category_${artifact.category}` as never)}
           </p>
-          <h1 className={`mt-2 font-display text-4xl leading-tight ${hardMode ? "text-zinc-100" : "text-ink"}`}>{name}</h1>
+          <h1 className={`mt-2 font-display text-4xl leading-tight ${hardMode ? "text-zinc-800" : "text-ink"}`}>{name}</h1>
         </div>
 
         {imageUrl && (
-          <div className={`border-b px-6 py-5 ${hardMode ? "border-red-900/30 bg-zinc-900" : "border-border bg-card"}`}>
-            <div className={`grid aspect-[16/10] place-items-center overflow-hidden rounded-2xl ${hardMode ? "bg-zinc-800" : "bg-accent/40"}`}>
+          <div className={`border-b px-6 py-5 ${hardMode ? "border-cyan-800/20 bg-white/40" : "border-border bg-card"}`}>
+            <div className={`grid aspect-[16/10] place-items-center overflow-hidden rounded-2xl ${hardMode ? "bg-white/50" : "bg-accent/40"}`}>
               <img
                 src={imageUrl}
                 alt={name}
@@ -151,21 +151,21 @@ function ArtifactPage() {
               <dd className={`font-display text-base ${hardMode ? "text-zinc-200" : "text-ink"}`}>{material}</dd>
             </div>
           </dl>
-          <p className={`text-base leading-relaxed ${hardMode ? "text-zinc-300" : "text-foreground/90"} md:col-span-2`}>{desc}</p>
+          <p className={`text-base leading-relaxed ${hardMode ? "text-zinc-100" : "text-foreground/90"} md:col-span-2`}>{desc}</p>
         </div>
 
-        <div className={`border-t p-6 ${hardMode ? "border-red-900/30 bg-zinc-900" : "border-border bg-accent/40"}`}>
+        <div className={`border-t p-6 ${hardMode ? "border-cyan-800/20 bg-white/40" : "border-border bg-accent/40"}`}>
           {result ? (
             <RewardSummary result={result} />
           ) : quizDone ? (
             <div className="space-y-4">
-              <div className={`flex items-center gap-2 text-sm ${hardMode ? "text-emerald-400" : "text-jungle"}`}>
+              <div className={`flex items-center gap-2 text-sm ${hardMode ? "text-cyan-800" : "text-jungle"}`}>
                 <Check className="size-4" />
                 {t("already_claimed")} · +{progress?.exp_earned} EXP
               </div>
-              <div className={`rounded-2xl border-2 p-4 ${hardMode ? "border-zinc-700 bg-zinc-900" : "border-primary/20 bg-card"}`}>
+              <div className={`rounded-2xl border-2 p-4 ${hardMode ? "border-cyan-800/30 bg-white/50" : "border-primary/20 bg-card"}`}>
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-1">{t("quiz_score")}</p>
-                <p className={`font-display text-2xl ${hardMode ? "text-zinc-100" : "text-ink"}`}>{progress?.quiz_correct_count}/{progress?.quiz_total_questions}</p>
+                <p className={`font-display text-2xl ${hardMode ? "text-zinc-800" : "text-ink"}`}>{progress?.quiz_correct_count}/{progress?.quiz_total_questions}</p>
               </div>
             </div>
           ) : alreadyClaimed ? (
