@@ -96,7 +96,7 @@ export function QrScannerBox({ onScan }: Props) {
   return (
     <div className="mx-auto max-w-lg space-y-4">
       {/* Scanner video area — more compact so alternatives are visible above fold */}
-      <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl border-2 border-border bg-card shadow-[0_12px_30px_-18px_oklch(0.5_0.08_25/0.3)] sm:aspect-[16/9] max-h-64">
+      <div className="relative mx-auto aspect-square w-full max-w-[400px] overflow-hidden rounded-2xl border-2 border-border bg-card shadow-[0_12px_30px_-18px_oklch(0.5_0.08_25/0.3)] max-h-[400px]">
         <video ref={videoRef} className="h-full w-full object-cover" playsInline muted />
         {!running && (
           <div className="absolute inset-0 grid place-items-center bg-card/90 p-4 text-center">
