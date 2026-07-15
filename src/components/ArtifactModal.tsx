@@ -50,6 +50,14 @@ export function ArtifactModal({ result, onClose }: Props) {
   const [localResult, setLocalResult] = useState<ScanResult>(result);
   const [quizInProgress, setQuizInProgress] = useState(false);
   const [showLevelUp, setShowLevelUp] = useState(false);
+  const [hardMode, setHardMode] = useState(false);
+
+  // Sync hard mode from localStorage
+  useEffect(() => {
+    const unlocked = localStorage.getItem('hm-unlocked') === 'true';
+    const active = localStorage.getItem('hm-active') === 'true';
+    setHardMode(unlocked && active);
+  }, []);
 
   // Show level-up popup when the result has levelUps
   useEffect(() => {
@@ -338,6 +346,7 @@ export function ArtifactModal({ result, onClose }: Props) {
                     setLocalResult(res);
                   }}
                   onInProgressChange={(v) => setQuizInProgress(v)}
+                  hardMode={hardMode}
                 />
                 <button
                   type="button"
