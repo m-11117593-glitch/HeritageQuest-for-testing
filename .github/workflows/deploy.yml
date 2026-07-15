@@ -23,4 +23,5 @@ jobs:
       - name: Deploy to Cloudflare Workers
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        run: bunx wrangler deploy
+        # TanStack Start SSR produces .output/server/wrangler.json with correct Worker config
+        run: bunx wrangler deploy --config .output/server/wrangler.json
