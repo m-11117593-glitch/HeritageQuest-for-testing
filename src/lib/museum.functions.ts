@@ -63,7 +63,8 @@ const scanInput = z.object({
   artifactId: z.string().min(1),
   correctCount: z.number().min(0).max(10).optional(),
   totalQuestions: z.number().min(0).max(10).optional(),
-  hardCorrect: z.boolean().optional()
+  hardCorrect: z.boolean().optional(),
+  isHardMode: z.boolean().optional()
 });
 
 export const scanArtifact = createServerFn({ method: "POST" })
@@ -192,7 +193,8 @@ export const scanArtifact = createServerFn({ method: "POST" })
           exp_earned: expEarned,
           quiz_correct_count: data.correctCount ?? null,
           quiz_total_questions: data.totalQuestions ?? (data.correctCount !== undefined ? 5 : null),
-          quiz_completed_at: data.correctCount !== undefined ? new Date().toISOString() : null
+          quiz_completed_at: data.correctCount !== undefined ? new Date().toISOString() : null,
+          is_hard_mode: data.isHardMode ?? false
         });
       if (insErr) throw new Error(insErr.message);
     } else if (data.correctCount !== undefined && !quizDone) {
@@ -202,7 +204,8 @@ export const scanArtifact = createServerFn({ method: "POST" })
           exp_earned: (prior.exp_earned ?? 0) + expEarned,
           quiz_correct_count: data.correctCount,
           quiz_total_questions: data.totalQuestions ?? 5,
-          quiz_completed_at: new Date().toISOString()
+          quiz_completed_at: new Date().toISOString(),
+          is_hard_mode: data.isHardMode ?? false
         })
         .eq("user_id", userId)
         .eq("artifact_id", artifact.id);
@@ -232,6 +235,39 @@ export const scanArtifact = createServerFn({ method: "POST" })
       await supabase.from("user_quests").insert(newQuests.map((quest_id) => ({ user_id: userId, quest_id })));
     }
 
+    // Hard mode flags & cumulative stats — needed by badge & achievement checks below
+    const isHardMode = data.isHardMode ?? false;
+    const { data: allQuizData } = await supabase
+      .from("user_artifact_progress")
+      .select("quiz_correct_count, quiz_total_questions, is_hard_mode")
+      .eq("user_id", userId)
+      .not("quiz_correct_count", "is", null);
+    const hardQuizRows = (allQuizData ?? []).filter((q) => q.is_hard_mode === true);
+    const hardQuizzesDone = hardQuizRows.length;
+    const hardTotalCorrect = hardQuizRows.reduce(
+      (sum, q) => sum + (q.quiz_correct_count ?? 0), 0
+    );
+    // Compute max streak in hard mode: sort by scanned_at chronologically
+    const { data: hardQuizChrono } = await supabase
+      .from("user_artifact_progress")
+      .select("quiz_correct_count, quiz_total_questions, scanned_at")
+      .eq("user_id", userId)
+      .eq("is_hard_mode", true)
+      .not("quiz_correct_count", "is", null)
+      .order("scanned_at", { ascending: true });
+    let hardMaxStreak = 0;
+    if (hardQuizChrono) {
+      let currentRun = 0;
+      for (const row of hardQuizChrono) {
+        if (row.quiz_correct_count != null && row.quiz_correct_count === row.quiz_total_questions) {
+          currentRun++;
+          if (currentRun > hardMaxStreak) hardMaxStreak = currentRun;
+        } else {
+          currentRun = 0;
+        }
+      }
+    }
+
     // --- Level & points ---
     const newExp = Math.max(0, oldExp + expEarned);
     const newLevel = levelForExp(newExp);
@@ -256,6 +292,18 @@ export const scanArtifact = createServerFn({ method: "POST" })
     if (scanCount >= 8 && !earnedBadgeIds.has("separuh-jalan")) newBadges.push("separuh-jalan");
     if (scanCount === TOTAL_ARTIFACTS && !earnedBadgeIds.has("peneroka-muzium")) newBadges.push("peneroka-muzium");
 
+    // --- Hard mode badges ---
+    // (only awarded when a hard mode quiz was just completed)
+    if (isHardMode && data.correctCount !== undefined && !quizDone) {
+      if (!earnedBadgeIds.has("pencabar-sukar")) newBadges.push("pencabar-sukar");
+      if (data.correctCount >= 7 && !earnedBadgeIds.has("pemikir-tajam")) newBadges.push("pemikir-tajam");
+      if (data.correctCount === data.totalQuestions && !earnedBadgeIds.has("mahir-sukar")) newBadges.push("mahir-sukar");
+      // kebal-cabaran: 3 consecutive perfect hard mode quizzes
+      if (hardMaxStreak >= 3 && !earnedBadgeIds.has("kebal-cabaran")) newBadges.push("kebal-cabaran");
+      // legenda-sukar: all 15 hard mode quizzes done
+      if (hardQuizzesDone >= 15 && !earnedBadgeIds.has("legenda-sukar")) newBadges.push("legenda-sukar");
+    }
+
     const badgesToInsert = [...new Set(newBadges)].filter((b) => !earnedBadgeIds.has(b));
     if (badgesToInsert.length) {
       await supabase.from("user_badges").insert(badgesToInsert.map((badge_id) => ({ user_id: userId, badge_id })));
@@ -266,18 +314,16 @@ export const scanArtifact = createServerFn({ method: "POST" })
     const earnedAchIds = new Set((earnedAchievements ?? []).map((a) => a.achievement_id));
     const { data: allAch } = await supabase.from("achievements").select("*");
 
-    // Query cumulative quiz data for quiz-based achievements
-    const { data: quizData } = await supabase
-      .from("user_artifact_progress")
-      .select("quiz_correct_count, quiz_total_questions")
-      .eq("user_id", userId)
-      .not("quiz_correct_count", "is", null);
-    const perfectQuizzes = (quizData ?? []).filter(
+    // Compute normal-mode stats from allQuizData (already fetched above)
+    const perfectQuizzes = (allQuizData ?? []).filter(
       (q) => q.quiz_correct_count != null && q.quiz_correct_count === q.quiz_total_questions
     ).length;
-    const totalCorrect = (quizData ?? []).reduce(
+    const totalCorrect = (allQuizData ?? []).reduce(
       (sum, q) => sum + (q.quiz_correct_count ?? 0), 0
     );
+    const hardPerfectCount = hardQuizRows.filter(
+      (q) => q.quiz_correct_count != null && q.quiz_correct_count === q.quiz_total_questions
+    ).length;
 
     // Compute user's leaderboard rank — only if there's a leaderboard_rank achievement still unearned
     let leaderboardRank: number | null = null;
@@ -304,6 +350,11 @@ export const scanArtifact = createServerFn({ method: "POST" })
       else if (a.requirement_key === "perfect_quizzes") ok = perfectQuizzes >= a.requirement_value;
       else if (a.requirement_key === "total_correct") ok = totalCorrect >= a.requirement_value;
       else if (a.requirement_key === "leaderboard_rank") ok = leaderboardRank !== null && leaderboardRank <= a.requirement_value;
+      // Hard mode achievement keys
+      else if (a.requirement_key === "hard_quizzes") ok = hardQuizzesDone >= a.requirement_value;
+      else if (a.requirement_key === "hard_perfect") ok = hardPerfectCount >= a.requirement_value;
+      else if (a.requirement_key === "hard_streak") ok = hardMaxStreak >= a.requirement_value;
+      else if (a.requirement_key === "hard_total_correct") ok = hardTotalCorrect >= a.requirement_value;
       if (ok) newAchievements.push(a.id);
     }
     if (newAchievements.length) {

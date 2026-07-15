@@ -270,6 +270,7 @@ export function ArtifactQuizSection({
             correctCount: finalCorrectCount,
             totalQuestions: totalQuestions,
             hardCorrect,
+            isHardMode: isHardMode,
           },
         })) as ScanResult;
 

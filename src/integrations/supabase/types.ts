@@ -339,6 +339,7 @@ export type Database = {
         Row: {
           artifact_id: string
           exp_earned: number
+          is_hard_mode: boolean
           quiz_completed_at: string | null
           quiz_correct_count: number | null
           quiz_total_questions: number | null
@@ -348,6 +349,7 @@ export type Database = {
         Insert: {
           artifact_id: string
           exp_earned?: number
+          is_hard_mode?: boolean
           quiz_completed_at?: string | null
           quiz_correct_count?: number | null
           quiz_total_questions?: number | null
@@ -357,6 +359,7 @@ export type Database = {
         Update: {
           artifact_id?: string
           exp_earned?: number
+          is_hard_mode?: boolean
           quiz_completed_at?: string | null
           quiz_correct_count?: number | null
           quiz_total_questions?: number | null
