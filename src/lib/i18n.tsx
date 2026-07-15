@@ -181,6 +181,9 @@ const STRINGS = {
   reward_hover_poskad: { bm: "Poskad kolektor bergambar warisan Malaysia.", en: "Collectible postcard featuring Malaysian heritage." },
   reward_hover_magnet: { bm: "Magnet peti sejuk mini bertema muzium.", en: "Mini museum-themed fridge magnet." },
   reward_hover_tshirt: { bm: "Baju-T edisi HeritageQuest, katun premium.", en: "Limited HeritageQuest tee, premium cotton." },
+  quiz_empty_title: { bm: "Tiada Kuiz Tersedia", en: "No Quizzes Yet" },
+  quiz_empty_sub: { bm: "Imbas artifak pertama anda untuk membuka kunci kuiz.", en: "Scan your first artifact to unlock quizzes." },
+  quiz_empty_cta: { bm: "Mula Imbas", en: "Start Scanning" },
 } as const;
 
 export type StringKey = keyof typeof STRINGS;
