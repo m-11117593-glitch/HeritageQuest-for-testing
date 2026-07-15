@@ -102,7 +102,7 @@ function ArtifactPage() {
         <ArrowLeft className="size-4" /> {t("back")}
       </Link>
 
-      <article className={`overflow-hidden rounded-2xl ${hardMode ? "hm-card-bg hm-ambient-glow hm-red-border shadow-lg shadow-red-950/30" : "paper-card"}`}>
+      <article className={`overflow-hidden rounded-2xl ${hardMode ? "hm-card-bg hm-ambient-glow hm-red-border shadow-lg shadow-cyan-500/20" : "paper-card"}`}>
         {/* Cute rounded header */}
         <div className={`relative border-b px-6 py-8 ${hardMode ? "hm-header-bg" : "border-border bg-gradient-to-br from-accent to-secondary"}`}>
           <div className="absolute inset-x-4 top-4 flex justify-between text-[10px] uppercase tracking-[0.35em] text-muted-foreground">
@@ -136,22 +136,22 @@ function ArtifactPage() {
               <dt className="text-[10px] uppercase tracking-widest text-muted-foreground">
                 {t("era")}
               </dt>
-              <dd className={`font-display text-base ${hardMode ? "text-zinc-700" : "text-ink"}`}>{era}</dd>
+              <dd className={`font-display text-base ${hardMode ? "text-zinc-200" : "text-ink"}`}>{era}</dd>
             </div>
             <div>
               <dt className="text-[10px] uppercase tracking-widest text-muted-foreground">
                 {t("origin")}
               </dt>
-              <dd className={`font-display text-base ${hardMode ? "text-zinc-700" : "text-ink"}`}>{origin}</dd>
+              <dd className={`font-display text-base ${hardMode ? "text-zinc-200" : "text-ink"}`}>{origin}</dd>
             </div>
             <div>
               <dt className="text-[10px] uppercase tracking-widest text-muted-foreground">
                 {t("material")}
               </dt>
-              <dd className={`font-display text-base ${hardMode ? "text-zinc-700" : "text-ink"}`}>{material}</dd>
+              <dd className={`font-display text-base ${hardMode ? "text-zinc-200" : "text-ink"}`}>{material}</dd>
             </div>
           </dl>
-          <p className={`text-base leading-relaxed ${hardMode ? "text-zinc-300" : "text-foreground/90"} md:col-span-2`}>{desc}</p>
+          <p className={`text-base leading-relaxed ${hardMode ? "text-zinc-100" : "text-foreground/90"} md:col-span-2`}>{desc}</p>
         </div>
 
         <div className={`border-t p-6 ${hardMode ? "border-cyan-800/20 bg-white/40" : "border-border bg-accent/40"}`}>
@@ -159,11 +159,11 @@ function ArtifactPage() {
             <RewardSummary result={result} />
           ) : quizDone ? (
             <div className="space-y-4">
-              <div className={`flex items-center gap-2 text-sm ${hardMode ? "text-emerald-400" : "text-jungle"}`}>
+              <div className={`flex items-center gap-2 text-sm ${hardMode ? "text-cyan-800" : "text-jungle"}`}>
                 <Check className="size-4" />
                 {t("already_claimed")} · +{progress?.exp_earned} EXP
               </div>
-              <div className={`rounded-2xl border-2 p-4 ${hardMode ? "border-cyan-300/30 bg-white/50" : "border-primary/20 bg-card"}`}>
+              <div className={`rounded-2xl border-2 p-4 ${hardMode ? "border-cyan-800/30 bg-white/50" : "border-primary/20 bg-card"}`}>
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-1">{t("quiz_score")}</p>
                 <p className={`font-display text-2xl ${hardMode ? "text-zinc-800" : "text-ink"}`}>{progress?.quiz_correct_count}/{progress?.quiz_total_questions}</p>
               </div>

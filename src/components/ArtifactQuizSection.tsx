@@ -445,10 +445,23 @@ export function ArtifactQuizSection({
   /* ── Active quiz ── */
 
   return (
-    <section className={`relative overflow-hidden rounded-2xl ${isHardMode ? "hm-card-bg hm-ambient-glow hm-red-border shadow-lg shadow-red-950/30" : "game-card"}`}>
+    <section className={`relative overflow-hidden rounded-2xl ${isHardMode ? "hm-card-bg hm-ambient-glow hm-red-border shadow-lg shadow-cyan-500/20" : "game-card"}`}>
       {/* Hard mode ambient glow background */}
       {isHardMode && (
         <div className="pointer-events-none absolute inset-0 hm-ambient-bg" />
+      )}
+      {/* Hard mode subtle diagonal pattern overlay */}
+      {isHardMode && (
+        <div className="pointer-events-none absolute inset-0 hm-pattern" />
+      )}
+      {/* Hard mode sparkle decorations */}
+      {isHardMode && (
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          <span className="hm-float-sparkle absolute left-3 top-3 text-xs text-cyan-400" style={{ animationDelay: "0s" }}>✦</span>
+          <span className="hm-float-sparkle absolute right-14 bottom-2 text-[10px] text-cyan-400" style={{ animationDelay: "0.8s" }}>✧</span>
+          <span className="hm-float-sparkle absolute left-12 bottom-8 text-xs text-amber-400/60" style={{ animationDelay: "1.6s" }}>✦</span>
+          <span className="hm-float-sparkle absolute right-4 top-14 text-[9px] text-cyan-300" style={{ animationDelay: "2.4s" }}>✧</span>
+        </div>
       )}
 
       {/* Splash particle burst on correct in hard mode */}
@@ -458,9 +471,16 @@ export function ArtifactQuizSection({
       {feedbackType && <FeedbackPopup key={feedbackKey} type={feedbackType} hardMode={isHardMode} />}
 
       {/* Gradient header bar with category emoji + streak meter */}
-      <div className={`flex items-center gap-3 border-b px-6 py-4 ${isHardMode ? "hm-header-bg" : "border-border bg-gradient-to-br from-accent to-secondary/60"}`}>
+      <div className={`relative flex items-center gap-3 border-b px-6 py-4 ${isHardMode ? "hm-header-bg" : "border-border bg-gradient-to-br from-accent to-secondary/60"}`}>
+        {/* Hard mode header sparkle accents */}
+        {isHardMode && (
+          <div className="pointer-events-none absolute inset-0 overflow-hidden">
+            <span className="hm-float-sparkle absolute left-8 top-2 text-[8px] text-cyan-400/50" style={{ animationDelay: "0.4s" }}>✦</span>
+            <span className="hm-float-sparkle absolute right-20 top-2 text-[8px] text-cyan-400/50" style={{ animationDelay: "1.2s" }}>✧</span>
+          </div>
+        )}
         <span
-          className="grid size-10 shrink-0 place-items-center rounded-full text-lg wiggle"
+          className={`grid size-10 shrink-0 place-items-center rounded-full text-lg ${isHardMode ? "hm-emoji-ring" : "wiggle"}`}
           style={{ background: catMeta.bg, color: catMeta.color }}
         >
           {catMeta.emoji}
@@ -481,13 +501,13 @@ export function ArtifactQuizSection({
           {/* Combo meter badge */}
           <ComboMeter streak={streak} animKey={streakKey} hardMode={isHardMode} />
         </div>
-        <span className={`chip shrink-0 text-[10px] ${isHardMode ? "bg-zinc-700 text-cyan-300 border-cyan-500/50" : ""}`}>
+        <span className={`chip shrink-0 text-[10px] ${isHardMode ? "bg-zinc-200 text-amber-700 border-cyan-400/50" : ""}`}>
           {currentIndex + 1} / {questions.length}
         </span>
       </div>
 
       {/* Question area with slide transition */}
-      <div className="px-6 pt-6">
+      <div className="px-6 pt-6 pb-4">
         <div
           className={`mb-6 min-h-[4.5rem] ${
             transitionDir === "out"
@@ -503,8 +523,16 @@ export function ArtifactQuizSection({
           <div className="mt-2 flex items-center gap-1.5">
             <div className="flex">
               {[1, 2, 3, 4, 5].map((level) => {
-                const isFilled = level <= currentQuestion.difficulty;
-                const colors = [
+                // In hard mode, always show all 5 stars filled with menacing red/amber
+                const isFilled = isHardMode ? true : level <= currentQuestion.difficulty;
+                const hmColors = [
+                  "text-red-500",
+                  "text-red-500",
+                  "text-red-500",
+                  "text-amber-500",
+                  "text-amber-500",
+                ];
+                const colors = isHardMode ? hmColors : [
                   "text-jungle",
                   "text-indigo",
                   "text-primary",
@@ -516,7 +544,7 @@ export function ArtifactQuizSection({
                     key={level}
                     className={`size-3 transition-all duration-300 ${
                       isFilled
-                        ? `${colors[level - 1]} drop-shadow-sm`
+                        ? `${colors[level - 1]} ${isHardMode ? "drop-shadow-[0_0_6px_currentColor]" : "drop-shadow-sm"}`
                         : "text-muted-foreground/20"
                     }`}
                     fill={isFilled ? "currentColor" : "none"}
@@ -524,18 +552,20 @@ export function ArtifactQuizSection({
                 );
               })}
             </div>
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-              {lang === "bm"
-                ? currentQuestion.difficulty <= 2
-                  ? "Mudah"
-                  : currentQuestion.difficulty <= 4
-                    ? "Sederhana"
-                    : "Sukar"
-                : currentQuestion.difficulty <= 2
-                  ? "Easy"
-                  : currentQuestion.difficulty <= 4
-                    ? "Medium"
-                    : "Hard"}
+            <span className={`text-[10px] font-semibold uppercase tracking-wider ${isHardMode ? "text-red-400 drop-shadow-[0_0_6px_rgba(248,113,113,0.4)]" : "text-muted-foreground"}`}>
+              {isHardMode
+                ? lang === "bm" ? "Sukar" : "Hard"
+                : lang === "bm"
+                  ? currentQuestion.difficulty <= 2
+                    ? "Mudah"
+                    : currentQuestion.difficulty <= 4
+                      ? "Sederhana"
+                      : "Sukar"
+                  : currentQuestion.difficulty <= 2
+                    ? "Easy"
+                    : currentQuestion.difficulty <= 4
+                      ? "Medium"
+                      : "Hard"}
             </span>
           </div>
         </div>
