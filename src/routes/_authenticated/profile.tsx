@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { Award, Gift, Scroll, ArrowRight, Coins, MapPin, Star } from "lucide-react";
+import { Award, Gift, Scroll, ArrowRight, Coins, MapPin, Trophy } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
 import { ExpBar } from "@/components/ExpBar";
@@ -47,11 +47,11 @@ async function fetchProfile() {
   const visibleBadgeEarnedCount = visibleBadges.filter((b: any) => b.earned).length;
   const visibleBadgeTotal = visibleBadges.length; // 7
 
-  // Combined list: visible badges + earned achievements with earned flag, sorted by sort_order
-  const combined = [
-    ...visibleBadges,
-    ...(allAch ?? []).map((a: any) => ({ ...a, earned: earnedAchIds.has(a.id) })),
-  ].sort((a: any, b: any) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+  // Build separate lists: all badges (visible) + all achievements (with earned flag)
+  const badgesAll = visibleBadges; // already has earned + earnedAt from badgesWithState
+  const achievementsAll = (allAch ?? []).map((a: any) => ({ ...a, earned: earnedAchIds.has(a.id) }));
+  const earnedAchCount = earnedAchIds.size;
+  const totalAchCount = (allAch ?? []).length;
 
   return {
     email: authData.user?.email ?? "",
@@ -60,13 +60,12 @@ async function fetchProfile() {
     level: prog?.current_level ?? 1,
     points: prog?.discount_points ?? 0,
     scanCount: (scanned ?? []).length,
-    badges: badgesWithState,
-    achievements: earnedAchList,
-    totalBadges: (allBadges ?? []).length,
-    totalAch: (allAch ?? []).length,
-    combined,
-    combinedTotal: visibleBadgeTotal + (allAch ?? []).length,
-    combinedEarned: visibleBadgeEarnedCount + earnedAchIds.size,
+    badges: badgesAll,
+    achievements: achievementsAll,
+    badgeEarnedCount: visibleBadgeEarnedCount,
+    badgeTotalCount: visibleBadgeTotal,
+    achEarnedCount: earnedAchCount,
+    achTotalCount: totalAchCount,
   };
 }
 
@@ -248,25 +247,47 @@ function ProfilePage() {
               </div>
             </button>
 
-            {/* Badges & Achievements combined stat */}
+            {/* Badges stat */}
             <div className="group relative overflow-hidden rounded-2xl border-2 border-border bg-card p-3 text-center">
-              <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-indigo via-gold to-amber-400" />
+              <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-gold to-amber-400" />
               <div className="relative">
                 <div className="flex items-center justify-center gap-1 text-muted-foreground">
                   <Award className="size-3.5" />
                   <span className="text-[10px] font-semibold uppercase tracking-widest">
-                    {t("profile_earned_all")}
+                    {t("nav_badges")}
                   </span>
                 </div>
                 <p className="mt-0.5 font-display text-xl tabular-nums">
-                  <span className="text-indigo">{data.combinedEarned}</span>
-                  <span className="text-sm text-muted-foreground">/{data.combinedTotal}</span>
+                  <span className="text-gold-foreground">{data.badgeEarnedCount}</span>
+                  <span className="text-sm text-muted-foreground">/{data.badgeTotalCount}</span>
                 </p>
               </div>
             </div>
 
-            {/* Empty spacer (was achievements stat, now merged) */}
-            <div />
+            {/* Achievements stat */}
+            <button
+              type="button"
+              onClick={() => {
+                sfx.pop();
+                setTimeout(() => sfx.tap(), 90);
+                void navigate({ to: "/achievements", hash: "achievements" });
+              }}
+              className="group relative overflow-hidden rounded-2xl border-2 border-border bg-card p-3 text-center transition-[transform,border-color,box-shadow] duration-200 ease-[var(--ease-out)] hover:border-primary/60 hover:shadow-md active:scale-[0.98]"
+            >
+              <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-indigo to-jungle" />
+              <div className="relative">
+                <div className="flex items-center justify-center gap-1 text-muted-foreground">
+                  <Trophy className="size-3.5" />
+                  <span className="text-[10px] font-semibold uppercase tracking-widest">
+                    {t("nav_achievements")}
+                  </span>
+                </div>
+                <p className="mt-0.5 font-display text-xl tabular-nums">
+                  <span className="text-indigo">{data.achEarnedCount}</span>
+                  <span className="text-sm text-muted-foreground">/{data.achTotalCount}</span>
+                </p>
+              </div>
+            </button>
           </div>
 
           {/* Points & Rewards — coin style */}
@@ -325,39 +346,38 @@ function ProfilePage() {
           </HoverCard>
         </section>
 
-        {/* ─── Badges & Achievements ─── */}
+        {/* ─── Badges ─── */}
         <section className="game-card p-5 animate-in fade-in slide-in-from-bottom-4 duration-500" style={{ animationDelay: "150ms" }}>
           <div className="mb-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Star className="size-4 text-gold" />
-              <h2 className="font-display text-lg">{t("profile_earned_all")}</h2>
+              <Award className="size-4 text-gold" />
+              <h2 className="font-display text-lg">{t("nav_badges")}</h2>
+              <span className="text-xs text-muted-foreground">({data.badgeEarnedCount}/{data.badgeTotalCount})</span>
             </div>
             <Link to="/achievements" className="text-xs font-semibold text-muted-foreground hover:text-primary transition-colors">
               {t("view_all")} →
             </Link>
           </div>
 
-          {data.combinedEarned === 0 ? (
+          {data.badgeEarnedCount === 0 ? (
             <p className="text-sm text-muted-foreground">{t("none_yet")}</p>
           ) : (
             <div className="grid grid-cols-3 gap-4 sm:grid-cols-4">
-              {data.combined.map((item: any) => {
-                const isBadge = item.earnedAt !== undefined;
+              {data.badges.map((item: any) => {
                 const icon = resolveAchievementIcon(item.icon || "🏅", item.id);
                 const name = lang === "bm" ? item.name_bm : item.name_en;
-                const earned = item.earned;
                 return (
                   <button
                     key={item.id}
                     type="button"
-                    onClick={() => isBadge && setSelectedBadge(item)}
+                    onClick={() => setSelectedBadge(item)}
                     className="group"
                   >
                     <BadgeMedallion
                       icon={icon}
-                      label={earned ? name : "???"}
+                      label={item.earned ? name : "???"}
                       rarity={(item.rarity ?? "common") as Rarity}
-                      locked={!earned}
+                      locked={!item.earned}
                       size="md"
                     />
                   </button>
@@ -366,6 +386,38 @@ function ProfilePage() {
             </div>
           )}
         </section>
+
+        {/* ─── Achievements ─── */}
+        {data.achEarnedCount > 0 && (
+          <section className="game-card p-5 animate-in fade-in slide-in-from-bottom-4 duration-500" style={{ animationDelay: "250ms" }}>
+            <div className="mb-4 flex items-center gap-2">
+              <Trophy className="size-4 text-indigo" />
+              <h2 className="font-display text-lg">{t("nav_achievements")}</h2>
+              <span className="text-xs text-muted-foreground">({data.achEarnedCount}/{data.achTotalCount})</span>
+            </div>
+            <div className="grid grid-cols-3 gap-4 sm:grid-cols-4">
+              {data.achievements.map((item: any) => {
+                const icon = resolveAchievementIcon(item.icon || "🏆", item.id);
+                const name = lang === "bm" ? item.name_bm : item.name_en;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    className="group"
+                  >
+                    <BadgeMedallion
+                      icon={icon}
+                      label={item.earned ? name : "???"}
+                      rarity={(item.rarity ?? "common") as Rarity}
+                      locked={!item.earned}
+                      size="md"
+                    />
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+        )}
 
         {/* Badge detail dialog */}
         <Dialog open={!!selectedBadge} onOpenChange={(v) => { if (!v) setSelectedBadge(null); }}>

@@ -5,11 +5,15 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev",
+    "dev:env": "dotenv -e .env.dev -- vite dev",
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "lint": "eslint .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "deploy:prod": "bun run build && wrangler deploy --config .output/server/wrangler.json",
+    "deploy:dev": "bun run build && wrangler deploy --config wrangler.dev.toml",
+    "typecheck": "npx -p typescript tsc --noEmit"
   },
   "dependencies": {
     "@fontsource/fredoka": "^5.2.10",
