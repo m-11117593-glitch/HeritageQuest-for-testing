@@ -147,7 +147,9 @@ export function ArtifactModal({ result, onClose }: Props) {
       }
     }}>
       <DialogContent 
-        className={`max-h-[90vh] overflow-y-auto rounded-[28px] border-2 border-border bg-card transition-[max-width] duration-300 ease-[var(--ease-out)] ${
+        className={`max-h-[90vh] overflow-y-auto rounded-[28px] border-2 transition-[max-width] duration-300 ease-[var(--ease-out)] ${
+          hardMode ? "border-red-500/20 bg-zinc-950" : "border-border bg-card"
+        } ${
           showQuiz ? "max-w-6xl" : "max-w-3xl"
         }`}
       >

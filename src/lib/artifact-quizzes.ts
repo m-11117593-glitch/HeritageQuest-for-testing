@@ -432,7 +432,7 @@ function buildCompositeQuestion(artifact: ArtifactQuizArtifact, seed: string): A
 
   return {
     id: `${artifact.id}-composite`,
-    difficulty: 4,
+    difficulty: 5,
     prompt: {
       bm: `Gabungan zaman dan bahan yang manakah BETUL untuk ${artifact.name_bm}?`,
       en: `Which era + material combination is CORRECT for ${artifact.name_en}?`,

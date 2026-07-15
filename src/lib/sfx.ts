@@ -105,32 +105,35 @@ export const sfx = {
   fail()   { tone(330, 0.14, "sawtooth", 0.14); tone(220, 0.28, "sawtooth", 0.14, 0.1); tone(110, 0.4, "sawtooth", 0.12, 0.22); },
   scanBeep(){ tone(1200, 0.05, "square", 0.05); },
 
-  /** Hard mode correct — deep, ominous but satisfying chime */
+  /** Hard mode correct — deep menacing chime with dissonant intervals */
   hardCorrect() {
-    tone(196, 0.15, "triangle", 0.12);       // G3 (deep)
-    tone(293.66, 0.15, "triangle", 0.10, 0.10); // D4
-    tone(392, 0.15, "sine", 0.12, 0.20);      // G4
-    tone(587.33, 0.30, "sine", 0.10, 0.30);   // D5 (held)
-    tone(783.99, 0.18, "sine", 0.06, 0.40);   // G5 (shimmer)
-    vibrate([60, 20, 40]);
+    tone(130.81, 0.20, "square", 0.06);        // C3 — dark low pedal
+    tone(196, 0.18, "sawtooth", 0.07, 0.08);   // G3 — growl
+    tone(233.08, 0.15, "square", 0.08, 0.16);  // Bb3 — minor third = ominous
+    tone(311.13, 0.25, "sawtooth", 0.10, 0.24); // Eb4 — diminished feel
+    tone(415.3, 0.30, "sine", 0.06, 0.32);     // G#4 — dark shimmer
+    tone(622.25, 0.20, "sine", 0.04, 0.42);    // Eb5 — distant
+    vibrate([50, 30, 60]);
   },
-  /** Hard mode wrong — deep, menacing descending growl */
+  /** Hard mode wrong — deep, industrial clang with sub-bass rumble */
   hardWrong() {
-    tone(280, 0.15, "sawtooth", 0.10);
-    tone(200, 0.15, "sawtooth", 0.09, 0.10);
-    tone(140, 0.25, "sawtooth", 0.08, 0.20);
-    tone(100, 0.30, "square", 0.06, 0.30);
-    vibrate([30, 20, 50]);
+    tone(110, 0.35, "square", 0.10);           // A2 — deep sub
+    tone(155.56, 0.20, "sawtooth", 0.12, 0.06); // D#3 — metallic
+    tone(116.54, 0.18, "square", 0.09, 0.14);  // Bb2 — clang
+    tone(92.5, 0.40, "sawtooth", 0.07, 0.22);   // F#2 — low rumble
+    tone(69.3, 0.50, "square", 0.05, 0.32);     // C#2 — sub-bass
+    vibrate([40, 30, 70]);
   },
-  /** Hard mode fanfare — dark triumphant for perfect hard quiz */
+  /** Hard mode fanfare — dark triumphant with minor tonality */
   hardFanfare() {
-    tone(392, 0.10, "triangle", 0.12);        // G4
-    tone(493.88, 0.10, "triangle", 0.12, 0.08); // B4
-    tone(587.33, 0.10, "triangle", 0.14, 0.16); // D5
-    tone(783.99, 0.30, "sine", 0.16, 0.24);     // G5 (held)
-    tone(987.77, 0.20, "sine", 0.08, 0.30);     // B5 (sparkle)
-    tone(1174.66, 0.15, "sine", 0.06, 0.35);    // D6
-    vibrate([50, 30, 50, 30, 80]);
+    tone(311.13, 0.12, "square", 0.10);        // Eb4 — minor third
+    tone(369.99, 0.12, "square", 0.11, 0.08);  // F#4 — tritone! (diabolus)
+    tone(466.16, 0.12, "square", 0.12, 0.16);  // Bb4
+    tone(622.25, 0.35, "sawtooth", 0.14, 0.24); // Eb5 (held) — dark power
+    tone(739.99, 0.22, "sine", 0.08, 0.30);    // F#5 — tritone shimmer
+    tone(932.33, 0.18, "sine", 0.05, 0.38);    // Bb5
+    tone(1244.51, 0.12, "sine", 0.03, 0.44);   // Eb6
+    vibrate([60, 30, 60, 30, 100]);
   },
 };
 
