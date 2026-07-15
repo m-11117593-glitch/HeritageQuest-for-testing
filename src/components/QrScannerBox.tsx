@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Camera, CameraOff, KeyRound, Image as ImageIcon } from "lucide-react";
+import { Camera, CameraOff, KeyRound, Image as ImageIcon, Circle } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { sfx } from "@/lib/sfx";
 import { parseArtifactCode } from "@/lib/museum";
@@ -15,6 +15,7 @@ export function QrScannerBox({ onScan }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [manual, setManual] = useState("");
   const [decoding, setDecoding] = useState(false);
+  const [capturing, setCapturing] = useState(false);
 
   useEffect(() => {
     return () => { stopCamera(); };
@@ -46,6 +47,46 @@ export function QrScannerBox({ onScan }: Props) {
       const msg = e instanceof Error ? e.message : String(e);
       setError(msg || t("scan_permission"));
       sfx.error();
+    }
+  }
+
+  async function handleCapture() {
+    const video = videoRef.current;
+    if (!video || capturing) return;
+    setCapturing(true);
+    setError(null);
+    try {
+      // Create a canvas matching the video dimensions
+      const canvas = document.createElement("canvas");
+      canvas.width = video.videoWidth || 400;
+      canvas.height = video.videoHeight || 400;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) { setError(t("scan_invalid")); sfx.error(); setCapturing(false); return; }
+      // Draw the current video frame onto the canvas
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      // Convert to blob and scan
+      const blob = await new Promise<Blob | null>((resolve) =>
+        canvas.toBlob((b) => resolve(b), "image/png"),
+      );
+      if (!blob) { setError(t("scan_invalid")); sfx.error(); setCapturing(false); return; }
+
+      sfx.pop();
+      const mod = await import("qr-scanner");
+      const QrScanner = mod.default;
+      const result = await QrScanner.scanImage(blob, { returnDetailedScanResult: true });
+      const raw = typeof result === "string" ? result : result.data;
+      const id = parseArtifactCode(raw);
+      if (!id) { setError(t("scan_invalid")); sfx.error(); setCapturing(false); return; }
+      sfx.scanBeep();
+      stopCamera();
+      onScan(id);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setError(msg || t("scan_invalid"));
+      sfx.error();
+    } finally {
+      setCapturing(false);
     }
   }
 
@@ -128,6 +169,21 @@ export function QrScannerBox({ onScan }: Props) {
               className="absolute right-2 top-2 grid size-8 place-items-center rounded-full bg-card/90 text-ink shadow"
               title={t("scan_stop")}
             ><CameraOff className="size-3.5" /></button>
+            {/* Capture / shutter button */}
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2">
+              <button
+                onClick={handleCapture}
+                disabled={capturing}
+                className="group flex size-14 items-center justify-center rounded-full bg-white/90 shadow-lg backdrop-blur-sm transition-[transform,box-shadow] duration-150 hover:scale-110 hover:shadow-xl active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
+                title="Capture"
+              >
+                {capturing ? (
+                  <span className="inline-block size-7 animate-spin rounded-full border-[3px] border-primary/30 border-t-primary" />
+                ) : (
+                  <Circle className="size-8 fill-primary text-primary" />
+                )}
+              </button>
+            </div>
           </>
         )}
       </div>
