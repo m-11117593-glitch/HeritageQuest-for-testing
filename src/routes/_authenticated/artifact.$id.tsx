@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ArrowLeft, Check, Sparkles, Flag, Award, TrendingUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
@@ -45,7 +45,15 @@ function ArtifactPage() {
   const scanFn = useServerFn(scanArtifact);
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<ScanResult | null>(null);
-  const hardMode = typeof window !== "undefined" ? localStorage.getItem('hm-unlocked') === 'true' && localStorage.getItem('hm-active') === 'true' : false;
+  const [hardMode, setHardMode] = useState(false);
+
+  // Sync hard mode from localStorage after hydration (SSR-safe)
+  useEffect(() => {
+    setHardMode(
+      localStorage.getItem('hm-unlocked') === 'true' && 
+      localStorage.getItem('hm-active') === 'true'
+    );
+  }, []);
 
   const { data, isLoading } = useQuery({
     queryKey: ["artifact", id],
