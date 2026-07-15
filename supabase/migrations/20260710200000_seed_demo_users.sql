@@ -1,4 +1,4 @@
--- Seed 20 demo users for a lively leaderboard demo
+-- Seed 5 demo users for a lively leaderboard demo
 -- Each user gets: auth.users entry, profile, progress, scanned artifacts, and badges
 -- Password for all demo users: demo123
 -- Idempotent: skips users whose email already exists
@@ -47,22 +47,7 @@ BEGIN
       ('JelajahSetia'::TEXT, 520::INT, 5::INT, 14::INT),
       ('WarisanKu'::TEXT,    460::INT, 4::INT, 13::INT),
       ('BudayaAbadi'::TEXT,  400::INT, 4::INT, 12::INT),
-      ('SejarahMuda'::TEXT,  340::INT, 4::INT, 11::INT),
-      ('TanahAirKu'::TEXT,   280::INT, 3::INT, 10::INT),
-      ('MelayuJati'::TEXT,   240::INT, 3::INT, 9::INT),
-      ('BumiKenyalang'::TEXT,200::INT, 3::INT, 8::INT),
-      ('SultanMerah'::TEXT,  170::INT, 2::INT, 7::INT),
-      ('PahlawanEsa'::TEXT,  140::INT, 2::INT, 6::INT),
-      ('SeriPantai'::TEXT,   120::INT, 2::INT, 5::INT),
-      ('IntanBaik'::TEXT,    100::INT, 2::INT, 5::INT),
-      ('WiraMalaya'::TEXT,   85::INT,  1::INT, 4::INT),
-      ('RimbaRaya'::TEXT,    70::INT,  1::INT, 3::INT),
-      ('MutiaraTimur'::TEXT, 55::INT,  1::INT, 3::INT),
-      ('CempakaSari'::TEXT,  40::INT,  1::INT, 2::INT),
-      ('TerataiPagi'::TEXT,  30::INT,  1::INT, 2::INT),
-      ('PelangiSenja'::TEXT, 20::INT,  1::INT, 1::INT),
-      ('BintangFajar'::TEXT, 10::INT,  1::INT, 1::INT),
-      ('AnakMuda'::TEXT,     0::INT,   1::INT, 0::INT)
+      ('SejarahMuda'::TEXT,  340::INT, 4::INT, 11::INT)
     ) AS t(username, total_exp, level, scan_count)
   LOOP
     demo_email := LOWER(REPLACE(demo.username, ' ', '')) || '@heritagequest.demo';

@@ -446,21 +446,6 @@ const DEMO_USERS = [
   { username: "WarisanKu",    totalExp: 460, level: 4, scanCount: 13, badgesCount: 3 },
   { username: "BudayaAbadi",  totalExp: 400, level: 4, scanCount: 12, badgesCount: 3 },
   { username: "SejarahMuda",  totalExp: 340, level: 4, scanCount: 11, badgesCount: 3 },
-  { username: "TanahAirKu",   totalExp: 280, level: 3, scanCount: 10, badgesCount: 2 },
-  { username: "MelayuJati",   totalExp: 240, level: 3, scanCount: 9,  badgesCount: 2 },
-  { username: "BumiKenyalang", totalExp: 200, level: 3, scanCount: 8,  badgesCount: 2 },
-  { username: "SultanMerah",   totalExp: 170, level: 2, scanCount: 7,  badgesCount: 2 },
-  { username: "PahlawanEsa",   totalExp: 140, level: 2, scanCount: 6,  badgesCount: 1 },
-  { username: "SeriPantai",    totalExp: 120, level: 2, scanCount: 5,  badgesCount: 1 },
-  { username: "IntanBaik",     totalExp: 100, level: 2, scanCount: 5,  badgesCount: 1 },
-  { username: "WiraMalaya",    totalExp: 85,  level: 1, scanCount: 4,  badgesCount: 1 },
-  { username: "RimbaRaya",     totalExp: 70,  level: 1, scanCount: 3,  badgesCount: 1 },
-  { username: "MutiaraTimur",  totalExp: 55,  level: 1, scanCount: 3,  badgesCount: 0 },
-  { username: "CempakaSari",   totalExp: 40,  level: 1, scanCount: 2,  badgesCount: 0 },
-  { username: "TerataiPagi",   totalExp: 30,  level: 1, scanCount: 2,  badgesCount: 0 },
-  { username: "PelangiSenja",  totalExp: 20,  level: 1, scanCount: 1,  badgesCount: 0 },
-  { username: "BintangFajar",  totalExp: 10,  level: 1, scanCount: 1,  badgesCount: 0 },
-  { username: "AnakMuda",      totalExp: 0,   level: 1, scanCount: 0,  badgesCount: 0 },
 ] as const;
 
 /**
@@ -814,7 +799,7 @@ export const getLeaderboard = createServerFn({ method: "GET" })
     }
 
     // Only inject fallback demo users if the migration hasn't been run yet.
-    if (entries.length < 22) {
+    if (entries.length < 7) {
       const realDemoExists = entries.some((e) => demoUsernames.includes(e.username));
 
       if (!realDemoExists) {

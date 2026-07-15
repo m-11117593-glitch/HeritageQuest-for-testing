@@ -1,10 +1,11 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Award, Sparkles, CheckCircle2, ArrowRight, Brain, Star, Zap } from "lucide-react";
+import { Award, Sparkles, CheckCircle2, ArrowRight, Brain, Star, Zap, Scan, QrCode } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
 import { artifactImageUrl } from "@/lib/artifact-images";
 import { CATEGORY_META, ZONE_LAYOUT, type CategoryKey } from "@/lib/museum";
+import { sfx } from "@/lib/sfx";
 
 export const Route = createFileRoute("/_authenticated/quizzes")({
   component: QuizzesPage,
@@ -20,14 +21,17 @@ async function fetchQuizzes() {
   ]);
 
   const progressMap = new Map((progress ?? []).map((p) => [p.artifact_id, p]));
-  return { artifacts: artifacts ?? [], progressMap };
+  const hasAnyProgress = (progress ?? []).length > 0;
+  return { artifacts: artifacts ?? [], progressMap, hasAnyProgress };
 }
 
 function QuizzesPage() {
   const { t, lang } = useI18n();
+  const navigate = useNavigate();
   const { data } = useQuery({ queryKey: ["quizzes"], queryFn: fetchQuizzes });
   const artifacts = data?.artifacts ?? [];
   const progressMap = data?.progressMap ?? new Map<string, any>();
+  const hasAnyProgress = data?.hasAnyProgress ?? false;
 
   const available = artifacts.filter((a) => {
     const p = progressMap.get(a.id);
@@ -91,7 +95,34 @@ function QuizzesPage() {
           {t("quiz_title")}
           <span className="text-sm font-normal text-muted-foreground">({available.length})</span>
         </h2>
-        {available.length === 0 ? (
+        {available.length === 0 && !hasAnyProgress ? (
+          <div className="game-card flex flex-col items-center gap-4 p-10 text-center">
+            <div className="relative">
+              <div className="flex size-20 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 to-gold/20">
+                <QrCode className="size-10 text-primary" />
+              </div>
+              <div className="absolute -right-1 -top-1 flex size-8 items-center justify-center rounded-full bg-gold text-[11px] font-bold text-white shadow-md animate-bounce">
+                <Scan className="size-4" />
+              </div>
+            </div>
+            <div>
+              <p className="font-display text-xl text-ink">{t("quiz_empty_title")}</p>
+              <p className="mt-1 text-sm text-muted-foreground">{t("quiz_empty_sub")}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                sfx.pop();
+                setTimeout(() => sfx.tap(), 90);
+                void navigate({ to: "/scan" });
+              }}
+              className="bounce-soft inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-primary to-gold px-6 py-3 font-bold text-primary-foreground shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 active:scale-95"
+            >
+              <Scan className="size-4" />
+              {t("quiz_empty_cta")}
+            </button>
+          </div>
+        ) : available.length === 0 && hasAnyProgress ? (
           <div className="game-card flex flex-col items-center gap-3 p-8 text-center">
             <CheckCircle2 className="size-12 text-jungle" />
             <p className="font-display text-lg text-jungle">{t("all_done")}</p>
