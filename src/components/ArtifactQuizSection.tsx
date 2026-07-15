@@ -28,7 +28,7 @@ interface Props {
   onHardModeUnlock?: () => void;
 }
 
-import { FeedbackPopup, ConfettiBurst, PulseRing, ComboMeter } from "@/components/quiz-animations";
+import { FeedbackPopup, ConfettiBurst, PulseRing, ComboMeter, SplashEffect } from "@/components/quiz-animations";
 import { LevelUpPopup } from "@/components/LevelUpPopup";
 
 /* ── Main Quiz Section ── */
@@ -320,7 +320,7 @@ export function ArtifactQuizSection({
 
     return (
       <section className="relative animate-in zoom-in-95 game-card overflow-hidden duration-500">
-        {isPerfect && <ConfettiBurst count={24} />}
+        {isPerfect && <ConfettiBurst count={24} hardMode={isHardMode} />}
 
         {/* Gradient header */}
         <div className="relative border-b border-border bg-gradient-to-br from-accent to-secondary/60 px-6 py-6">
@@ -445,19 +445,27 @@ export function ArtifactQuizSection({
   /* ── Active quiz ── */
 
   return (
-    <section className={`relative overflow-hidden rounded-2xl border-2 ${isHardMode ? "border-red-500/20 bg-zinc-950 shadow-lg shadow-red-950/30" : "game-card"}`}>
+    <section className={`relative overflow-hidden rounded-2xl ${isHardMode ? "hm-card-bg hm-ambient-glow hm-red-border shadow-lg shadow-red-950/30" : "game-card"}`}>
+      {/* Hard mode ambient glow background */}
+      {isHardMode && (
+        <div className="pointer-events-none absolute inset-0 hm-ambient-bg" />
+      )}
+
+      {/* Splash particle burst on correct in hard mode */}
+      {isHardMode && feedbackType === "correct" && <SplashEffect key={feedbackKey} count={12} />}
+
       {/* Feedback popup overlay */}
-      {feedbackType && <FeedbackPopup key={feedbackKey} type={feedbackType} />}
+      {feedbackType && <FeedbackPopup key={feedbackKey} type={feedbackType} hardMode={isHardMode} />}
 
       {/* Gradient header bar with category emoji + streak meter */}
-      <div className={`flex items-center gap-3 border-b px-6 py-4 ${isHardMode ? "border-red-900/30 bg-gradient-to-br from-zinc-900 via-zinc-950 to-slate-900" : "border-border bg-gradient-to-br from-accent to-secondary/60"}`}>
+      <div className={`flex items-center gap-3 border-b px-6 py-4 ${isHardMode ? "hm-header-bg" : "border-border bg-gradient-to-br from-accent to-secondary/60"}`}>
         <span
           className="grid size-10 shrink-0 place-items-center rounded-full text-lg wiggle"
           style={{ background: catMeta.bg, color: catMeta.color }}
         >
           {catMeta.emoji}
         </span>
-        <div className="min-w-0 flex-1 flex items-center gap-2">            <div className={`flex items-center gap-2 text-sm font-bold uppercase tracking-widest ${isHardMode ? "text-red-400" : "text-primary"}`}>
+        <div className="min-w-0 flex-1 flex items-center gap-2">            <div className={`flex items-center gap-2 text-sm font-bold uppercase tracking-widest ${isHardMode ? "text-cyan-400 drop-shadow-[0_0_10px_rgba(34,211,238,0.4)]" : "text-primary"}`}>
               {isHardMode ? (
                 <>
                   <Skull className="size-4" />
@@ -471,9 +479,9 @@ export function ArtifactQuizSection({
               )}
             </div>
           {/* Combo meter badge */}
-          <ComboMeter streak={streak} animKey={streakKey} />
+          <ComboMeter streak={streak} animKey={streakKey} hardMode={isHardMode} />
         </div>
-        <span className="chip shrink-0 text-[10px]">
+        <span className={`chip shrink-0 text-[10px] ${isHardMode ? "bg-zinc-700 text-cyan-300 border-cyan-500/50" : ""}`}>
           {currentIndex + 1} / {questions.length}
         </span>
       </div>
@@ -488,7 +496,7 @@ export function ArtifactQuizSection({
           }`}
           key={currentIndex + (transitionDir === "in" ? "-in" : "-out")}
         >
-          <p className={`text-lg font-semibold leading-snug ${isHardMode ? "text-zinc-100" : "text-ink"}`}>
+          <p className={`text-lg font-semibold leading-snug ${isHardMode ? "text-zinc-800" : "text-ink"}`}>
             {lang === "bm" ? currentQuestion.prompt.bm : currentQuestion.prompt.en}
           </p>
           {/* Difficulty indicator */}
@@ -562,7 +570,7 @@ export function ArtifactQuizSection({
                 "border-jungle bg-jungle/15 text-jungle ring-2 ring-jungle/30 shadow-[0_0_12px_-3px_var(--color-jungle)] bounce-celebrate";
             } else {
               stateClass = isHardMode
-                ? "border-zinc-700 bg-zinc-900 text-zinc-300 transition-[border-color,background,box-shadow] duration-200 ease-[var(--ease-out)] hover:border-red-500/40 hover:bg-red-950/10 hover:shadow-md"
+                ? "hm-option-btn"
                 : "border-border bg-card transition-[border-color,background,box-shadow] duration-200 ease-[var(--ease-out)] hover:border-primary/50 hover:bg-primary/5 hover:shadow-md";
             }
 
@@ -583,7 +591,7 @@ export function ArtifactQuizSection({
               >
                 {/* Pulse ring on correct answer */}
                 {showState && isCorrect && (isSelected || showCorrectReveal) && (
-                  <PulseRing key={pulseKey} />
+                  <PulseRing key={pulseKey} color={isHardMode ? "oklch(0.65 0.2 25)" : "oklch(0.72 0.09 165)"} hardMode={isHardMode} />
                 )}
 
                 <span className="flex items-center gap-2">
@@ -619,7 +627,7 @@ export function ArtifactQuizSection({
       </div>
 
       {/* Progress bar + Next button */}
-      {(showNext || selectedIndex !== null) && (          <div className={`px-6 pb-6 pt-5 ${isHardMode ? "bg-zinc-950/50" : ""} ${
+      {(showNext || selectedIndex !== null) && (          <div className={`px-6 pb-6 pt-5 ${isHardMode ? "bg-white/50 backdrop-blur-sm" : ""} ${
             showNext ? "animate-in fade-in slide-in-from-bottom-2 duration-300" : ""
           }`}>
           {/* Progress bar matching ExpBar style */}
@@ -705,7 +713,7 @@ export function ArtifactQuizSection({
               disabled={submitting}
               className={`bounce-soft flex w-full items-center justify-center gap-2 rounded-2xl px-6 py-4 font-bold shadow-lg animate-in fade-in slide-in-from-bottom-2 ${
                 isHardMode
-                  ? "bg-gradient-to-r from-red-700 to-amber-800 text-white shadow-red-900/25 hover:shadow-xl hover:shadow-red-900/30"
+                  ? "hm-next-btn"
                   : "bg-gradient-to-r from-primary to-gold text-primary-foreground shadow-primary/25 hover:shadow-xl hover:shadow-primary/30"
               } active:scale-95 disabled:opacity-60 disabled:hover:shadow-lg`}
             >
