@@ -6,9 +6,9 @@ account_id = "427805553c3b64604de391e49f0b0348"
 compatibility_flags = ["nodejs_compat"]
 
 [vars]
-SUPABASE_URL = "https://lgnkgvzeibjrcbdhwycu.supabase.co"
-SUPABASE_PUBLISHABLE_KEY = "sb_publishable_DWt4jeKpLtBOWgIkkkBYlA_BA_pNwx7"
-SUPABASE_PROJECT_ID = "lgnkgvzeibjrcbdhwycu"
-VITE_SUPABASE_URL = "https://lgnkgvzeibjrcbdhwycu.supabase.co"
-VITE_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_DWt4jeKpLtBOWgIkkkBYlA_BA_pNwx7"
-VITE_SUPABASE_PROJECT_ID = "lgnkgvzeibjrcbdhwycu"
+SUPABASE_URL = "https://lyehlfgqclrxinyzfpao.supabase.co"
+SUPABASE_PUBLISHABLE_KEY = "sb_publishable_Y5wYSz0k4_oOaRmJLsDVvg_ek20GBgP"
+SUPABASE_PROJECT_ID = "lyehlfgqclrxinyzfpao"
+VITE_SUPABASE_URL = "https://lyehlfgqclrxinyzfpao.supabase.co"
+VITE_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_Y5wYSz0k4_oOaRmJLsDVvg_ek20GBgP"
+VITE_SUPABASE_PROJECT_ID = "lyehlfgqclrxinyzfpao"
