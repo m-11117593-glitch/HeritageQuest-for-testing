@@ -28,6 +28,23 @@ const ACHIEVEMENT_ICON_MAP: Record<string, string> = {
   "ach-perfect-quiz": "perfect-quiz-3.jpg",
   "ach-teka-sahih": "teka-sahih.jpg",
   "ach-social-top": "social-top.jpg",
+  // Hard mode badges
+  "pencabar-sukar": "pencabar-sukar.jpg",
+  "pemikir-tajam": "pemikir-tajam.jpg",
+  "kebal-cabaran": "kebal-cabaran.jpg",
+  "mahir-sukar": "mahir-sukar.jpg",
+  "legenda-sukar": "legenda-sukar.jpg",
+  // Hard mode achievements
+  "h-quiz-first": "h-quiz-first.jpg",
+  "h-quiz-five": "h-quiz-five.jpg",
+  "h-quiz-all": "h-quiz-all.jpg",
+  "h-perfect-one": "h-quiz-perfect-one.jpg",
+  "h-perfect-three": "h-quiz-perfect-three.jpg",
+  "h-streak-3": "h-streak-3.jpg",
+  "h-streak-5": "h-streak-5.jpg",
+  "h-total-30": "h-quiz-total-30.jpg",
+  "h-total-60": "h-quiz-total-60.jpg",
+  "h-total-100": "h-quiz-total-100.jpg",
 };
 
 export function cn(...inputs: ClassValue[]) {
