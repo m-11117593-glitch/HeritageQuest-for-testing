@@ -485,10 +485,10 @@ export function ArtifactQuizSection({
         >
           {catMeta.emoji}
         </span>
-        <div className="min-w-0 flex-1 flex items-center gap-2">            <div className={`flex items-center gap-2 text-sm font-bold uppercase tracking-widest ${isHardMode ? "text-cyan-400 drop-shadow-[0_0_10px_rgba(34,211,238,0.4)]" : "text-primary"}`}>
+        <div className="min-w-0 flex-1 flex items-center gap-2">            <div className={`flex items-center gap-2 text-lg font-bold uppercase tracking-widest ${isHardMode ? "text-cyan-400 hm-cyan-glow" : "text-primary"}`}>
               {isHardMode ? (
                 <>
-                  <Skull className="size-4" />
+                  <Skull className="size-5" />
                   {t("hm_quiz_title")}
                 </>
               ) : (
@@ -501,7 +501,7 @@ export function ArtifactQuizSection({
           {/* Combo meter badge */}
           <ComboMeter streak={streak} animKey={streakKey} hardMode={isHardMode} />
         </div>
-        <span className={`chip shrink-0 text-[10px] ${isHardMode ? "bg-zinc-200 text-amber-700 border-cyan-400/50" : ""}`}>
+        <span className={`chip shrink-0 text-[10px] ${isHardMode ? "bg-zinc-200 text-amber-700 hm-chip-border" : ""}`}>
           {currentIndex + 1} / {questions.length}
         </span>
       </div>
@@ -657,7 +657,7 @@ export function ArtifactQuizSection({
       </div>
 
       {/* Progress bar + Next button */}
-      {(showNext || selectedIndex !== null) && (          <div className={`px-6 pb-6 pt-5 ${isHardMode ? "bg-white/50 backdrop-blur-sm" : ""} ${
+      {(showNext || selectedIndex !== null) && (          <div className={`px-6 pb-6 pt-5 ${isHardMode ? "bg-gradient-to-b from-transparent via-white/30 to-white/50 backdrop-blur-sm" : ""} ${
             showNext ? "animate-in fade-in slide-in-from-bottom-2 duration-300" : ""
           }`}>
           {/* Progress bar matching ExpBar style */}

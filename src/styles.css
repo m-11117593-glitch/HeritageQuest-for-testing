@@ -347,23 +347,23 @@
 
 /* ── Hard Mode: Fluorescent cyan border on warm light background ── */
 
-/** Fluorescent cyan-blue pulsing border */
+/** Fluorescent cyan-blue pulsing border — extra strong glow */
 @utility hm-red-border {
-  border: 2px solid oklch(0.7 0.18 220 / 0.6);
+  border: 3px solid oklch(0.72 0.2 210 / 0.85);
   box-shadow:
-    0 0 20px -2px oklch(0.75 0.2 210 / 0.35),
-    0 0 50px -10px oklch(0.7 0.18 220 / 0.15),
-    inset 0 0 25px -6px oklch(0.75 0.2 210 / 0.08);
+    0 0 40px -2px oklch(0.75 0.22 205 / 0.6),
+    0 0 90px -12px oklch(0.7 0.2 215 / 0.35),
+    inset 0 0 40px -6px oklch(0.75 0.22 205 / 0.15);
   animation: hm-border-pulse 2s ease-in-out infinite;
 }
 @keyframes hm-border-pulse {
-  0%, 100% { border-color: oklch(0.7 0.18 220 / 0.6); box-shadow: 0 0 20px -2px oklch(0.75 0.2 210 / 0.35), 0 0 50px -10px oklch(0.7 0.18 220 / 0.15), inset 0 0 25px -6px oklch(0.75 0.2 210 / 0.08); }
-  50%      { border-color: oklch(0.78 0.2 200 / 0.8); box-shadow: 0 0 35px -2px oklch(0.8 0.22 195 / 0.5), 0 0 70px -10px oklch(0.75 0.2 210 / 0.25), inset 0 0 35px -6px oklch(0.8 0.22 195 / 0.12); }
+  0%, 100% { border-color: oklch(0.72 0.2 210 / 0.85); box-shadow: 0 0 40px -2px oklch(0.75 0.22 205 / 0.6), 0 0 90px -12px oklch(0.7 0.2 215 / 0.35), inset 0 0 40px -6px oklch(0.75 0.22 205 / 0.15); }
+  50%      { border-color: oklch(0.82 0.24 190 / 0.95); box-shadow: 0 0 60px -2px oklch(0.82 0.24 190 / 0.75), 0 0 120px -12px oklch(0.75 0.22 205 / 0.45), inset 0 0 50px -6px oklch(0.82 0.24 190 / 0.22); }
 }
 
-/** Warm light card background — no blue taint */
+/** Warm light card background — richer gradient for hard mode */
 @utility hm-card-bg {
-  background: linear-gradient(160deg, oklch(0.82 0.01 60) 0%, oklch(0.78 0.008 60) 50%, oklch(0.74 0.006 60) 100%);
+  background: linear-gradient(165deg, oklch(0.83 0.015 55) 0%, oklch(0.78 0.012 50) 40%, oklch(0.72 0.01 45) 100%);
   border-radius: inherit;
 }
 
@@ -371,6 +371,11 @@
 @utility hm-header-bg {
   background: linear-gradient(135deg, oklch(0.85 0.012 60) 0%, oklch(0.80 0.01 60) 60%, oklch(0.76 0.008 60) 100%);
   border-bottom: 1px solid oklch(0.6 0.02 60 / 0.25);
+}
+
+/** Consistent section background matching hm-header-bg for all card sections in hard mode */
+@utility hm-section-bg {
+  background: linear-gradient(135deg, oklch(0.85 0.012 60) 0%, oklch(0.80 0.01 60) 60%, oklch(0.76 0.008 60) 100%);
 }
 
 /** Subtle warm ambient glow behind card */
@@ -449,9 +454,9 @@
   50%      { box-shadow: 0 0 30px -2px oklch(0.78 0.22 200 / 0.65), 0 0 60px -8px oklch(0.7 0.18 220 / 0.3); }
 }
 
-/** Warm light ambient bg behind quiz area — no blue taint */
+/** Warm light ambient bg behind quiz area — richer gradient */
 @utility hm-ambient-bg {
-  background: linear-gradient(180deg, oklch(0.80 0.01 60), oklch(0.76 0.008 60), oklch(0.72 0.006 60));
+  background: linear-gradient(180deg, oklch(0.80 0.015 55) 0%, oklch(0.74 0.012 50) 50%, oklch(0.68 0.01 45) 100%);
 }
 
 /** Subtle diagonal pattern overlay for hard mode cards */
@@ -465,13 +470,31 @@
   );
 }
 
-/** Glow ring around category emoji in hard mode */
+/** Glow ring around category emoji in hard mode — stronger */
 @keyframes hm-emoji-pulse {
-  0%, 100% { box-shadow: 0 0 8px -2px oklch(0.7 0.18 220 / 0.2); transform: scale(1); }
-  50%      { box-shadow: 0 0 20px -2px oklch(0.75 0.2 210 / 0.4); transform: scale(1.05); }
+  0%, 100% { box-shadow: 0 0 12px -2px oklch(0.75 0.22 205 / 0.35); transform: scale(1); }
+  50%      { box-shadow: 0 0 30px -2px oklch(0.8 0.24 195 / 0.55); transform: scale(1.06); }
 }
 @utility hm-emoji-ring {
   animation: hm-emoji-pulse 2.5s ease-in-out infinite;
+}
+
+/** Strong cyan glow for individual elements (skull icons, labels, chips) - uses filter for SVG support */
+@utility hm-cyan-glow {
+  filter: drop-shadow(0 0 14px oklch(0.75 0.24 195 / 0.75)) drop-shadow(0 0 35px oklch(0.72 0.2 205 / 0.45));
+}
+
+/** Cyan glow border for chips / small elements in hard mode */
+@utility hm-chip-border {
+  border: 1.5px solid oklch(0.72 0.2 210 / 0.7);
+  box-shadow: 0 0 14px -2px oklch(0.75 0.22 205 / 0.4), 0 0 0 1px oklch(0.72 0.2 210 / 0.2) inset;
+}
+@utility hm-chip-border {
+  animation: hm-chip-pulse 2.2s ease-in-out infinite;
+}
+@keyframes hm-chip-pulse {
+  0%, 100% { border-color: oklch(0.72 0.2 210 / 0.7); box-shadow: 0 0 14px -2px oklch(0.75 0.22 205 / 0.4); }
+  50%      { border-color: oklch(0.82 0.24 190 / 0.85); box-shadow: 0 0 22px -2px oklch(0.82 0.24 190 / 0.55); }
 }
 
 /** Floating decorative sparkle for hard mode */

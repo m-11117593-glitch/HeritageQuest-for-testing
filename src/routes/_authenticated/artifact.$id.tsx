@@ -16,7 +16,6 @@ export const Route = createFileRoute("/_authenticated/artifact/$id")({
 });
 
 async function fetchArtifact(id: string) {
-  // DEBUG: log artifact fetch attempts to help diagnose 404 from quiz navigation
   try {
     console.log(`[artifact.$id] fetchArtifact called with id=`, id);
     const [{ data: artifact }, { data: mine }] = await Promise.all([
@@ -31,8 +30,6 @@ async function fetchArtifact(id: string) {
     return { artifact, mine };
   } catch (err) {
     console.error('[artifact.$id] fetchArtifact error:', err);
-    // Swallow errors during client-side fetch so the UI can show a friendly Not found
-    // message instead of an unhandled exception that triggers the app error boundary.
     return { artifact: null, mine: null };
   }
 }
@@ -50,7 +47,6 @@ function ArtifactPage() {
   // Sync hard mode from localStorage after hydration (SSR-safe)
   useEffect(() => {
     setHardMode(
-      localStorage.getItem('hm-unlocked') === 'true' && 
       localStorage.getItem('hm-active') === 'true'
     );
   }, []);
@@ -69,7 +65,6 @@ function ArtifactPage() {
     try {
       const res = (await scanFn({ data: { artifactId: id } })) as ScanResult;
       setResult(res);
-      // LevelUpPopup handles the level-up sound separately
       if (!res.levelUps) sfx.success();
       if (res.newBadges.length > 0) setTimeout(() => sfx.coin(), 400);
       qc.invalidateQueries();
@@ -80,9 +75,6 @@ function ArtifactPage() {
   }
 
   if (isLoading) return <p className="text-sm text-muted-foreground">…</p>;
-  // If rendering on the server (no window) and the artifact isn't present yet, show a neutral loading
-  // placeholder instead of a definitive "Not found". The server-side Supabase client may not have
-  // the user's auth session and could return null; let the client re-check after hydration.
   if (!artifact && typeof window === 'undefined') return <p className="text-sm text-muted-foreground">…</p>;
   if (!artifact) return <p className="text-sm">Not found.</p>;
 
@@ -103,13 +95,13 @@ function ArtifactPage() {
       </Link>
 
       <article className={`overflow-hidden rounded-2xl ${hardMode ? "hm-card-bg hm-ambient-glow hm-red-border shadow-lg shadow-cyan-500/20" : "paper-card"}`}>
-        {/* Cute rounded header */}
+        {/* Cute rounded header — darker gradient for hard mode */}
         <div className={`relative border-b px-6 py-8 ${hardMode ? "hm-header-bg" : "border-border bg-gradient-to-br from-accent to-secondary"}`}>
-          <div className="absolute inset-x-4 top-4 flex justify-between text-[10px] uppercase tracking-[0.35em] text-muted-foreground">
+          <div className="absolute inset-x-4 top-4 flex justify-between text-xs uppercase tracking-[0.35em] text-muted-foreground">
             <span>{t("tagline")}</span>
             <span>№ {artifact.sort_order.toString().padStart(3, "0")}</span>
           </div>
-          <p className={`mt-6 text-xs font-semibold uppercase tracking-[0.3em] ${hardMode ? "text-cyan-400 drop-shadow-[0_0_6px_rgba(34,211,238,0.3)]" : "text-primary"}`}>
+          <p className={`mt-6 text-base font-semibold uppercase tracking-[0.3em] ${hardMode ? "text-cyan-400 hm-cyan-glow" : "text-primary"}`}>
             {t(`category_${artifact.category}` as never)}
           </p>
           <h1 className={`mt-2 font-display text-4xl leading-tight ${hardMode ? "text-zinc-800" : "text-ink"}`}>{name}</h1>
@@ -117,7 +109,7 @@ function ArtifactPage() {
 
         {imageUrl && (
           <div className={`border-b px-6 py-5 ${hardMode ? "border-cyan-800/20 bg-white/40" : "border-border bg-card"}`}>
-            <div className={`grid aspect-[16/10] place-items-center overflow-hidden rounded-2xl ${hardMode ? "bg-white/50" : "bg-accent/40"}`}>
+            <div className={`grid aspect-[16/10] place-items-center overflow-hidden rounded-2xl ${hardMode ? "bg-white/30" : "bg-accent/40"}`}>
               <img
                 src={imageUrl}
                 alt={name}
@@ -131,27 +123,27 @@ function ArtifactPage() {
         )}
 
         <div className="grid gap-6 p-6 md:grid-cols-3">
-          <dl className="space-y-3 text-sm md:col-span-1">
+          <dl className="space-y-3 md:col-span-1">
             <div>
-              <dt className="text-[10px] uppercase tracking-widest text-muted-foreground">
+              <dt className="text-xs uppercase tracking-widest text-muted-foreground">
                 {t("era")}
               </dt>
-              <dd className={`font-display text-base ${hardMode ? "text-zinc-200" : "text-ink"}`}>{era}</dd>
+              <dd className={`font-display text-xl ${hardMode ? "text-zinc-700" : "text-ink"}`}>{era}</dd>
             </div>
             <div>
-              <dt className="text-[10px] uppercase tracking-widest text-muted-foreground">
+              <dt className="text-xs uppercase tracking-widest text-muted-foreground">
                 {t("origin")}
               </dt>
-              <dd className={`font-display text-base ${hardMode ? "text-zinc-200" : "text-ink"}`}>{origin}</dd>
+              <dd className={`font-display text-xl ${hardMode ? "text-zinc-700" : "text-ink"}`}>{origin}</dd>
             </div>
             <div>
-              <dt className="text-[10px] uppercase tracking-widest text-muted-foreground">
+              <dt className="text-xs uppercase tracking-widest text-muted-foreground">
                 {t("material")}
               </dt>
-              <dd className={`font-display text-base ${hardMode ? "text-zinc-200" : "text-ink"}`}>{material}</dd>
+              <dd className={`font-display text-xl ${hardMode ? "text-zinc-700" : "text-ink"}`}>{material}</dd>
             </div>
           </dl>
-          <p className={`text-base leading-relaxed ${hardMode ? "text-zinc-100" : "text-foreground/90"} md:col-span-2`}>{desc}</p>
+          <p className={`text-lg leading-relaxed ${hardMode ? "text-zinc-800" : "text-foreground/90"} md:col-span-2`}>{desc}</p>
         </div>
 
         <div className={`border-t p-6 ${hardMode ? "border-cyan-800/20 bg-white/40" : "border-border bg-accent/40"}`}>
@@ -159,19 +151,19 @@ function ArtifactPage() {
             <RewardSummary result={result} />
           ) : quizDone ? (
             <div className="space-y-4">
-              <div className={`flex items-center gap-2 text-sm ${hardMode ? "text-cyan-800" : "text-jungle"}`}>
-                <Check className="size-4" />
+              <div className={`flex items-center gap-2 text-base ${hardMode ? "text-cyan-800" : "text-jungle"}`}>
+                <Check className="size-5" />
                 {t("already_claimed")} · +{progress?.exp_earned} EXP
               </div>
-              <div className={`rounded-2xl border-2 p-4 ${hardMode ? "border-cyan-800/30 bg-white/50" : "border-primary/20 bg-card"}`}>
+              <div className={`rounded-2xl border-2 p-4 ${hardMode ? "border-cyan-800/30 bg-white/30" : "border-primary/20 bg-card"}`}>
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-1">{t("quiz_score")}</p>
                 <p className={`font-display text-2xl ${hardMode ? "text-zinc-800" : "text-ink"}`}>{progress?.quiz_correct_count}/{progress?.quiz_total_questions}</p>
               </div>
             </div>
           ) : alreadyClaimed ? (
             <div className="space-y-6">
-              <div className="flex items-center gap-2 text-sm text-jungle">
-                <Check className="size-4" />
+              <div className="flex items-center gap-2 text-base text-jungle">
+                <Check className="size-5" />
                 {t("scanned")} · +{progress?.exp_earned} EXP
               </div>
               <ArtifactQuizSection 
