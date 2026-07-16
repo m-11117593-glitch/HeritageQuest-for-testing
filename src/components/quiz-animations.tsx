@@ -5,35 +5,43 @@ import { CheckCircle2, XCircle, Sparkles } from "lucide-react";
 export function FeedbackPopup({ type, hardMode }: { type: "correct" | "wrong"; hardMode?: boolean }) {
   return (
     <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center">
-      {/* Background flash — more vibrant in hard mode */}
+      {/* Background flash — more intense in hard mode */}
       <div
         className={`absolute inset-0 ${
           type === "correct"
             ? hardMode
-              ? "bg-purple-900/10"
+              ? "bg-cyan-500/10 animate-pulse"
               : "bg-jungle/5"
             : hardMode
-              ? "bg-red-900/10"
+              ? "bg-red-600/15 animate-pulse"
               : "bg-destructive/5"
-        } animate-in fade-in duration-200`}
+        } animate-in fade-in duration-300`}
+        style={hardMode ? { animationDuration: "0.8s" } : undefined}
       />
-      {/* Hard mode: extra glow ring */}
+      {/* Hard mode: glow rings */}
       {hardMode && type === "correct" && (
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="size-48 rounded-full bg-purple-500/5 blur-3xl animate-in zoom-in duration-700" />
+          {/* Outer ring */}
+          <div className="size-64 rounded-full border-[6px] border-cyan-400/20 animate-in zoom-in duration-500" />
+          {/* Inner glow */}
+          <div className="absolute size-40 rounded-full bg-cyan-400/10 blur-2xl animate-in zoom-in duration-700" />
         </div>
       )}
       {hardMode && type === "wrong" && (
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="size-48 rounded-full bg-red-500/5 blur-3xl animate-in zoom-in duration-700" />
+          {/* Shatter ring */}
+          <div className="size-64 rounded-full border-[6px] border-red-500/20 animate-in zoom-in duration-500" 
+               style={{ animation: "shake-wrong 0.4s ease-in-out" }} />
+          <div className="absolute size-40 rounded-full bg-red-500/10 blur-2xl animate-in zoom-in duration-700" />
         </div>
       )}
       {/* Icon */}
-      <div className="feedback-popup">
+      <div className={`feedback-popup ${hardMode ? (type === "correct" ? "hm-correct-burst" : "hm-wrong-crash") : ""}`}
+           style={hardMode ? { animationDuration: "1s" } : undefined}>
         {type === "correct" ? (
           <div className={`flex size-28 items-center justify-center rounded-full shadow-2xl ${
             hardMode
-              ? "bg-gradient-to-br from-purple-600 via-violet-500 to-blue-500 shadow-purple-500/40"
+              ? "bg-gradient-to-br from-cyan-500 via-sky-500 to-blue-600 shadow-cyan-500/50 hm-glow-pulse"
               : "bg-gradient-to-br from-jungle to-emerald-400 shadow-jungle/40"
           }`}>
             <CheckCircle2 className="size-16 text-white drop-shadow-lg" />
@@ -41,7 +49,7 @@ export function FeedbackPopup({ type, hardMode }: { type: "correct" | "wrong"; h
         ) : (
           <div className={`flex size-28 items-center justify-center rounded-full shadow-2xl ${
             hardMode
-              ? "bg-gradient-to-br from-red-700 via-rose-600 to-orange-600 shadow-red-500/40"
+              ? "bg-gradient-to-br from-red-600 via-rose-600 to-orange-600 shadow-red-500/50"
               : "bg-gradient-to-br from-destructive to-red-400 shadow-destructive/40"
           }`}>
             <XCircle className="size-16 text-white drop-shadow-lg" />

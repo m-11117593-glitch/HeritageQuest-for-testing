@@ -128,19 +128,19 @@ function ArtifactPage() {
               <dt className="text-xs uppercase tracking-widest text-muted-foreground">
                 {t("era")}
               </dt>
-              <dd className={`font-display text-xl ${hardMode ? "text-zinc-700" : "text-ink"}`}>{era}</dd>
+              <dd className={`font-display text-2xl ${hardMode ? "text-zinc-700" : "text-ink"}`}>{era}</dd>
             </div>
             <div>
               <dt className="text-xs uppercase tracking-widest text-muted-foreground">
                 {t("origin")}
               </dt>
-              <dd className={`font-display text-xl ${hardMode ? "text-zinc-700" : "text-ink"}`}>{origin}</dd>
+              <dd className={`font-display text-2xl ${hardMode ? "text-zinc-700" : "text-ink"}`}>{origin}</dd>
             </div>
             <div>
               <dt className="text-xs uppercase tracking-widest text-muted-foreground">
                 {t("material")}
               </dt>
-              <dd className={`font-display text-xl ${hardMode ? "text-zinc-700" : "text-ink"}`}>{material}</dd>
+              <dd className={`font-display text-2xl ${hardMode ? "text-zinc-700" : "text-ink"}`}>{material}</dd>
             </div>
           </dl>
           <p className={`text-lg leading-relaxed ${hardMode ? "text-zinc-800" : "text-foreground/90"} md:col-span-2`}>{desc}</p>

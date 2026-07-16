@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { Sparkles, TrendingUp, X, Star, Zap } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
@@ -36,7 +36,6 @@ const PARTICLE_COLORS = [
 export function LevelUpPopup({ level, levelUps, onClose }: Props) {
   const { t, lang } = useI18n();
   const [visible, setVisible] = useState(true);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Play the level-up sound on mount
   useEffect(() => {
@@ -45,17 +44,7 @@ export function LevelUpPopup({ level, levelUps, onClose }: Props) {
     if (levelUps >= 2) {
       setTimeout(() => sfx.fanfare(), 400);
     }
-
-    // Auto-dismiss after 5 seconds
-    timerRef.current = setTimeout(() => {
-      setVisible(false);
-      onClose?.();
-    }, 5000);
-
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
-  }, [level, levelUps, onClose]);
+  }, [level, levelUps]);
 
   function handleDismiss() {
     setVisible(false);
@@ -214,7 +203,7 @@ export function LevelUpPopup({ level, levelUps, onClose }: Props) {
 
           {/* Fine print */}
           <p className="mt-4 text-[10px] text-muted-foreground/50">
-            {lang === "bm" ? "Tetingkap ini akan ditutup sendiri." : "This window will close automatically."}
+            {lang === "bm" ? "Klik X untuk menutup." : "Click X to close."}
           </p>
         </div>
       </div>

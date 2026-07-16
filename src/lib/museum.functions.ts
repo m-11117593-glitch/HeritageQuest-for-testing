@@ -800,7 +800,7 @@ export const getLeaderboard = createServerFn({ method: "GET" })
     userRank: number | null;
     season: SeasonInfo | null;
   }> => {
-    const { userId } = context;
+    const { userId, supabase } = context;
 
     // Demo usernames from the seed migration — used to detect demo users and guard injection
     const demoUsernames: string[] = DEMO_USERS.map((d) => d.username);
@@ -808,22 +808,13 @@ export const getLeaderboard = createServerFn({ method: "GET" })
     let season: SeasonInfo | null = null;
     let entries: LeaderboardEntry[] = [];
 
-    try {
-      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-
-      // Ensure season is up-to-date (auto-finalize if expired).
-      // Gracefully handle missing table (migration not yet applied).
-      try {
-        season = await ensureCurrentSeason(supabaseAdmin);
-      } catch (e) {
-        console.warn("[getLeaderboard] Could not load season — season table may not exist:", e);
-      }
-
+    // Helper: query leaderboard data from a given db client
+    async function queryFromClient(client: any): Promise<void> {
       const [{ data: profiles }, { data: progress }, { data: scans }, { data: badges }] = await Promise.all([
-        supabaseAdmin.from("profiles").select("id, username"),
-        supabaseAdmin.from("user_progress").select("user_id, total_exp, current_level"),
-        supabaseAdmin.from("user_artifact_progress").select("user_id"),
-        supabaseAdmin.from("user_badges").select("user_id"),
+        client.from("profiles").select("id, username"),
+        client.from("user_progress").select("user_id, total_exp, current_level"),
+        client.from("user_artifact_progress").select("user_id"),
+        client.from("user_badges").select("user_id"),
       ]);
 
       const progressMap = new Map((progress ?? []).map((p: any) => [p.user_id, p]));
@@ -833,7 +824,7 @@ export const getLeaderboard = createServerFn({ method: "GET" })
       for (const b of badges ?? []) badgeCountMap.set(b.user_id, (badgeCountMap.get(b.user_id) ?? 0) + 1);
 
       for (const p of profiles ?? []) {
-        const prog = progressMap.get(p.id);
+        const prog = progressMap.get(p.id) as { current_level: number; total_exp: number } | undefined;
         if (!prog) continue;
         entries.push({
           rank: 0,
@@ -846,11 +837,67 @@ export const getLeaderboard = createServerFn({ method: "GET" })
           isDemo: demoUsernames.includes(p.username),
         });
       }
-    } catch (e) {
-      console.warn("[getLeaderboard] Could not load real leaderboard data — using demo fallback:", e);
     }
 
-    // Only inject fallback demo users if the migration hasn't been run yet.
+    // Try supabaseAdmin first (bypasses RLS), fall back to authenticated supabase client
+    try {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+      // Ensure season is up-to-date (auto-finalize if expired).
+      // Gracefully handle missing table (migration not yet applied).
+      try {
+        season = await ensureCurrentSeason(supabaseAdmin);
+      } catch (e) {
+        console.warn("[getLeaderboard] Could not load season via supabaseAdmin — season table may not exist:", e);
+      }
+
+      await queryFromClient(supabaseAdmin);
+    } catch (e) {
+      console.warn("[getLeaderboard] supabaseAdmin failed — falling back to context supabase client:", e);
+      // Fall back to the authenticated context supabase client
+      try {
+        await queryFromClient(supabase);
+      } catch (e2) {
+        console.warn("[getLeaderboard] Context supabase also failed — using demo fallback:", e2);
+      }
+    }
+
+    // If the current user isn't in entries yet, fetch their data directly from context supabase
+    // This guarantees the user always appears even when supabaseAdmin or generic queries fail
+    if (!entries.some((e) => e.userId === userId)) {
+      try {
+        const [{ data: myProfile }, { data: myProgress }] = await Promise.all([
+          supabase.from("profiles").select("id, username").eq("id", userId).maybeSingle(),
+          supabase.from("user_progress").select("user_id, total_exp, current_level").eq("user_id", userId).maybeSingle(),
+        ]);
+
+        if (myProfile && myProgress) {
+          // Count scans & badges for this user
+          const { data: myScans } = await supabase
+            .from("user_artifact_progress")
+            .select("user_id")
+            .eq("user_id", userId);
+          const { data: myBadges } = await supabase
+            .from("user_badges")
+            .select("user_id")
+            .eq("user_id", userId);
+
+          entries.push({
+            rank: 0,
+            userId: myProfile.id,
+            username: myProfile.username,
+            level: myProgress.current_level,
+            totalExp: myProgress.total_exp,
+            scanCount: (myScans ?? []).length,
+            badgesCount: (myBadges ?? []).length,
+          });
+        }
+      } catch (e) {
+        console.warn("[getLeaderboard] Could not fetch current user data for leaderboard:", e);
+      }
+    }
+
+    // Only inject fallback demo users if we have fewer than 7 entries.
     if (entries.length < 7) {
       const realDemoExists = entries.some((e) => demoUsernames.includes(e.username));
 
