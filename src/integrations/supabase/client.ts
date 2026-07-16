@@ -32,8 +32,8 @@ function createSupabaseClient() {
   // Fall back to process.env for SSR (server-side rendering)
   // Baked-in fallbacks so deployments built without VITE_* env vars (e.g. Cloudflare
   // Workers) still connect. These are publishable (public) values — safe to ship in code.
-  const FALLBACK_SUPABASE_URL = 'https://lgnkgvzeibjrcbdhwycu.supabase.co';
-  const FALLBACK_SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_DWt4jeKpLtBOWgIkkkBYlA_BA_pNwx7';
+  const FALLBACK_SUPABASE_URL = 'https://lyehlfgqclrxinyzfpao.supabase.co';
+  const FALLBACK_SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_Y5wYSz0k4_oOaRmJLsDVvg_ek20GBgP';
   const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || FALLBACK_SUPABASE_URL;
   const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_PUBLISHABLE_KEY || FALLBACK_SUPABASE_PUBLISHABLE_KEY;
 

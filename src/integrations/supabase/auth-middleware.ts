@@ -36,8 +36,8 @@ export const requireSupabaseAuth = createMiddleware({ type: 'function' }).server
     // Baked-in fallbacks so deployments without server env vars (e.g. Cloudflare
     // Workers where wrangler [vars] don't populate process.env) still work.
     // These are publishable (public/anon) values - safe to ship in code.
-    const FALLBACK_SUPABASE_URL = 'https://lgnkgvzeibjrcbdhwycu.supabase.co';
-    const FALLBACK_SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_DWt4jeKpLtBOWgIkkkBYlA_BA_pNwx7';
+    const FALLBACK_SUPABASE_URL = 'https://lyehlfgqclrxinyzfpao.supabase.co';
+    const FALLBACK_SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_Y5wYSz0k4_oOaRmJLsDVvg_ek20GBgP';
     const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || FALLBACK_SUPABASE_URL;
     const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY || FALLBACK_SUPABASE_PUBLISHABLE_KEY;
     
