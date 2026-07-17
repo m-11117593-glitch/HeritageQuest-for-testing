@@ -967,6 +967,69 @@ export const redeemSouvenir = createServerFn({ method: "POST" })
     return { ok: true as const, balance: newBalance };
   });
 
+// ---------- Public Profile (bypasses RLS for friend viewing) ----------
+
+export interface PublicProfileData {
+  username: string;
+  exp: number;
+  level: number;
+  scanCount: number;
+  badgeCount: number;
+  achCount: number;
+  badges: any[];
+  achievements: any[];
+}
+
+const publicProfileInput = z.object({ userId: z.string().min(1) });
+
+export const getPublicProfile = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => publicProfileInput.parse(d))
+  .handler(async ({ data }): Promise<PublicProfileData | null> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const sa: any = supabaseAdmin;
+
+    const rawProfile: any = await sa.from("profiles").select("username").eq("id", data.userId).maybeSingle();
+    if (!rawProfile?.data) return null;
+
+    const rawProg: any = await sa.from("user_progress").select("total_exp, current_level").eq("user_id", data.userId).maybeSingle();
+    const rawScans: any = await sa.from("user_artifact_progress").select("artifact_id").eq("user_id", data.userId);
+    const rawBadges: any = await sa.from("user_badges").select("badge_id, earned_at").eq("user_id", data.userId);
+    const rawAch: any = await sa.from("user_achievements").select("achievement_id, earned_at").eq("user_id", data.userId);
+    const rawAllBadges: any = await sa.from("badges").select("*").order("sort_order");
+    const rawAllAch: any = await sa.from("achievements").select("*").order("sort_order");
+
+    const pData: any = rawProfile.data;
+    const progData: any = rawProg?.data;
+    const scanData: any[] = rawScans?.data ?? [];
+    const badgeData: any[] = rawBadges?.data ?? [];
+    const achData: any[] = rawAch?.data ?? [];
+    const allBadgeData: any[] = rawAllBadges?.data ?? [];
+    const allAchData: any[] = rawAllAch?.data ?? [];
+
+    const earnedBadgeIds = new Set(badgeData.map((b: any) => b.badge_id));
+    const earnedAchIds = new Set(achData.map((a: any) => a.achievement_id));
+
+    return {
+      username: pData.username,
+      exp: progData?.total_exp ?? 0,
+      level: progData?.current_level ?? 1,
+      scanCount: scanData.length,
+      badgeCount: earnedBadgeIds.size,
+      achCount: earnedAchIds.size,
+      badges: allBadgeData.map((b: any) => ({
+        ...b,
+        earned: earnedBadgeIds.has(b.id),
+        earnedAt: badgeData.find((eb: any) => eb.badge_id === b.id)?.earned_at,
+      })),
+      achievements: allAchData.map((a: any) => ({
+        ...a,
+        earned: earnedAchIds.has(a.id),
+        earnedAt: achData.find((ea: any) => ea.achievement_id === a.id)?.earned_at,
+      })),
+    };
+  });
+
 // ---------- Friend System ----------
 
 const friendInput = z.object({ receiverId: z.string().min(1) });
@@ -1068,8 +1131,8 @@ export interface FriendUser {
 export const getFriends = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<FriendUser[]> => {
-    const { supabase, userId } = context;
-    const sb = supabase as any;
+    const { userId } = context;
+    const sb = context.supabase as any;
     const { data: requests } = await sb
       .from("friend_requests")
       .select("*")
@@ -1109,11 +1172,14 @@ export const getFriends = createServerFn({ method: "GET" })
 
     const uids = results.map((r) => r.userId);
     if (uids.length > 0) {
+      // Use supabaseAdmin to bypass RLS and read friends' data
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const sa = supabaseAdmin as any;
       const [{ data: profiles }, { data: progress }, { data: scans }, { data: badges }] = await Promise.all([
-        supabase.from("profiles").select("id, username").in("id", uids),
-        supabase.from("user_progress").select("user_id, total_exp, current_level").in("user_id", uids),
-        supabase.from("user_artifact_progress").select("user_id").in("user_id", uids),
-        supabase.from("user_badges").select("user_id").in("user_id", uids),
+        sa.from("profiles").select("id, username").in("id", uids),
+        sa.from("user_progress").select("user_id, total_exp, current_level").in("user_id", uids),
+        sa.from("user_artifact_progress").select("user_id").in("user_id", uids),
+        sa.from("user_badges").select("user_id").in("user_id", uids),
       ]);
       const profileMap = new Map((profiles ?? []).map((p: any) => [p.id, p]));
       const progressMap = new Map((progress ?? []).map((p: any) => [p.user_id, p]));

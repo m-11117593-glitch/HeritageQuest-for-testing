@@ -2,65 +2,27 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { ArrowLeft, MapPin, Award, Trophy } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
 import { TOTAL_ARTIFACTS, expToNextLevel, type Rarity } from "@/lib/museum";
 import { ExpBar } from "@/components/ExpBar";
 import { BadgeMedallion } from "@/components/BadgeMedallion";
 import { resolveAchievementIcon } from "@/lib/utils";
 import { sfx } from "@/lib/sfx";
+import { getPublicProfile } from "@/lib/museum.functions";
+import { useServerFn } from "@tanstack/react-start";
 
 export const Route = createFileRoute("/_authenticated/profile/$userId")({
   component: PublicProfilePage,
 });
 
-async function fetchPublicProfile({ params }: { params: { userId: string } }) {
-  const { userId } = params;
-  const [{ data: profile }, { data: prog }, { data: scans }, { data: earnedBadges }, { data: earnedAch }, { data: allBadges }, { data: allAch }] = await Promise.all([
-    supabase.from("profiles").select("username").eq("id", userId).maybeSingle(),
-    supabase.from("user_progress").select("total_exp, current_level").eq("user_id", userId).maybeSingle(),
-    supabase.from("user_artifact_progress").select("artifact_id").eq("user_id", userId),
-    supabase.from("user_badges").select("badge_id, earned_at").eq("user_id", userId),
-    supabase.from("user_achievements").select("achievement_id, earned_at").eq("user_id", userId),
-    supabase.from("badges").select("*").order("sort_order"),
-    supabase.from("achievements").select("*").order("sort_order"),
-  ]);
-  if (!profile) return null;
-
-  const earnedBadgeIds = new Set((earnedBadges ?? []).map((b) => b.badge_id));
-  const earnedAchIds = new Set((earnedAch ?? []).map((a) => a.achievement_id));
-
-  const badgesWithState = (allBadges ?? []).map((b: any) => ({
-    ...b,
-    earned: earnedBadgeIds.has(b.id),
-    earnedAt: (earnedBadges ?? []).find((eb) => eb.badge_id === b.id)?.earned_at,
-  }));
-
-  const achWithState = (allAch ?? []).map((a: any) => ({
-    ...a,
-    earned: earnedAchIds.has(a.id),
-    earnedAt: (earnedAch ?? []).find((ea) => ea.achievement_id === a.id)?.earned_at,
-  }));
-
-  return {
-    username: profile.username,
-    exp: prog?.total_exp ?? 0,
-    level: prog?.current_level ?? 1,
-    scanCount: (scans ?? []).length,
-    badgeCount: earnedBadgeIds.size,
-    achCount: earnedAchIds.size,
-    badges: badgesWithState,
-    achievements: achWithState,
-  };
-}
-
 function PublicProfilePage() {
   const { t, lang } = useI18n();
   const navigate = useNavigate();
   const { userId } = Route.useParams();
+  const getProfileFn = useServerFn(getPublicProfile);
   const { data } = useQuery({
     queryKey: ["public-profile", userId],
-    queryFn: () => fetchPublicProfile({ params: { userId } }),
+    queryFn: () => getProfileFn({ data: { userId } }),
   });
   const [tab, setTab] = useState<"badges" | "achievements">("badges");
 
