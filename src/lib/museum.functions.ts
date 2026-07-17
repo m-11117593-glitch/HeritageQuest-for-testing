@@ -966,3 +966,190 @@ export const redeemSouvenir = createServerFn({ method: "POST" })
     if (rErr) throw new Error(rErr.message);
     return { ok: true as const, balance: newBalance };
   });
+
+// ---------- Friend System ----------
+
+const friendInput = z.object({ receiverId: z.string().min(1) });
+
+/** Send a friend request */
+export const sendFriendRequest = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => friendInput.parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const sb = supabase as any;
+    if (data.receiverId === userId) {
+      return { ok: false as const, reason: "self_request" as const };
+    }
+    // Check if already friends or pending
+    const { data: existing } = await sb
+      .from("friend_requests")
+      .select("id, status")
+      .or(`and(sender_id.eq.${userId},receiver_id.eq.${data.receiverId}),and(sender_id.eq.${data.receiverId},receiver_id.eq.${userId})`)
+      .maybeSingle();
+    if (existing) {
+      if (existing.status === "accepted") return { ok: false as const, reason: "already_friends" as const };
+      if (existing.status === "pending") return { ok: false as const, reason: "already_pending" as const };
+      const { error } = await sb
+        .from("friend_requests")
+        .update({ status: "pending", updated_at: new Date().toISOString() })
+        .eq("id", existing.id);
+      if (error) throw new Error(error.message);
+      return { ok: true as const };
+    }
+    const { error } = await sb
+      .from("friend_requests")
+      .insert({ sender_id: userId, receiver_id: data.receiverId, status: "pending" });
+    if (error) throw new Error(error.message);
+    return { ok: true as const };
+  });
+
+/** Accept a friend request */
+export const acceptFriendRequest = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => friendInput.parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const sb = supabase as any;
+    const { error } = await sb
+      .from("friend_requests")
+      .update({ status: "accepted", updated_at: new Date().toISOString() })
+      .eq("sender_id", data.receiverId)
+      .eq("receiver_id", userId)
+      .eq("status", "pending");
+    if (error) throw new Error(error.message);
+    return { ok: true as const };
+  });
+
+/** Decline or cancel a friend request */
+export const declineFriendRequest = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => friendInput.parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const sb = supabase as any;
+    const { error } = await sb
+      .from("friend_requests")
+      .delete()
+      .or(`and(sender_id.eq.${userId},receiver_id.eq.${data.receiverId}),and(sender_id.eq.${data.receiverId},receiver_id.eq.${userId})`)
+      .eq("status", "pending");
+    if (error) throw new Error(error.message);
+    return { ok: true as const };
+  });
+
+/** Remove a friend (delete accepted request) */
+export const removeFriend = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => friendInput.parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const sb = supabase as any;
+    const { error } = await sb
+      .from("friend_requests")
+      .delete()
+      .or(`and(sender_id.eq.${userId},receiver_id.eq.${data.receiverId}),and(sender_id.eq.${data.receiverId},receiver_id.eq.${userId})`)
+      .eq("status", "accepted");
+    if (error) throw new Error(error.message);
+    return { ok: true as const };
+  });
+
+export interface FriendUser {
+  userId: string;
+  username: string;
+  level: number;
+  totalExp: number;
+  scanCount: number;
+  badgesCount: number;
+  status: "accepted" | "pending" | "sent";
+  createdAt: string;
+}
+
+/** Get all friend relationships for the current user */
+export const getFriends = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<FriendUser[]> => {
+    const { supabase, userId } = context;
+    const sb = supabase as any;
+    const { data: requests } = await sb
+      .from("friend_requests")
+      .select("*")
+      .or(`sender_id.eq.${userId},receiver_id.eq.${userId}`)
+      .order("created_at", { ascending: false });
+    if (!requests) return [];
+
+    const friendIds = new Set<string>();
+    const results: FriendUser[] = [];
+    for (const r of requests) {
+      const otherId = r.sender_id === userId ? r.receiver_id : r.sender_id;
+      if (friendIds.has(otherId)) continue;
+      friendIds.add(otherId);
+
+      let status: FriendUser["status"];
+      if (r.status === "accepted") {
+        status = "accepted";
+      } else if (r.status === "pending" && r.sender_id === userId) {
+        status = "sent";
+      } else if (r.status === "pending" && r.receiver_id === userId) {
+        status = "pending";
+      } else {
+        continue;
+      }
+
+      results.push({
+        userId: otherId,
+        username: "...",
+        level: 0,
+        totalExp: 0,
+        scanCount: 0,
+        badgesCount: 0,
+        status,
+        createdAt: r.created_at,
+      });
+    }
+
+    const uids = results.map((r) => r.userId);
+    if (uids.length > 0) {
+      const [{ data: profiles }, { data: progress }, { data: scans }, { data: badges }] = await Promise.all([
+        supabase.from("profiles").select("id, username").in("id", uids),
+        supabase.from("user_progress").select("user_id, total_exp, current_level").in("user_id", uids),
+        supabase.from("user_artifact_progress").select("user_id").in("user_id", uids),
+        supabase.from("user_badges").select("user_id").in("user_id", uids),
+      ]);
+      const profileMap = new Map((profiles ?? []).map((p: any) => [p.id, p]));
+      const progressMap = new Map((progress ?? []).map((p: any) => [p.user_id, p]));
+      const scanCountMap = new Map<string, number>();
+      for (const s of scans ?? []) scanCountMap.set(s.user_id, (scanCountMap.get(s.user_id) ?? 0) + 1);
+      const badgeCountMap = new Map<string, number>();
+      for (const b of badges ?? []) badgeCountMap.set(b.user_id, (badgeCountMap.get(b.user_id) ?? 0) + 1);
+
+      for (const r of results) {
+        const p = profileMap.get(r.userId);
+        r.username = p?.username ?? "???";
+        const pr = progressMap.get(r.userId);
+        r.level = pr?.current_level ?? 0;
+        r.totalExp = pr?.total_exp ?? 0;
+        r.scanCount = scanCountMap.get(r.userId) ?? 0;
+        r.badgesCount = badgeCountMap.get(r.userId) ?? 0;
+      }
+    }
+
+    return results;
+  });
+
+const searchInput = z.object({ q: z.string().min(1).max(50) });
+
+/** Search users by username prefix */
+export const searchUsers = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => searchInput.parse(d))
+  .handler(async ({ data, context }): Promise<Array<{ id: string; username: string }>> => {
+    const { supabase, userId } = context;
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("id, username")
+      .ilike("username", `%${data.q}%`)
+      .limit(10);
+    return (profiles ?? [])
+      .filter((p: any) => p.id !== userId)
+      .map((p: any) => ({ id: p.id, username: p.username }));
+  });

@@ -195,6 +195,33 @@ const STRINGS = {
   hm_quiz_title: { bm: "Kuiz Sukar", en: "Hard Quiz" },
   hm_exp_bonus: { bm: "Bonus Mod Sukar", en: "Hard Mode Bonus" },
   hm_dark_hint: { bm: "Mod sukar aktif — fokus dan jawab dengan tepat!", en: "Hard mode active — focus and answer precisely!" },
+  // Friends
+  nav_friends: { bm: "Rakan", en: "Friends" },
+  friends_title: { bm: "Rakan", en: "Friends" },
+  friends_search_placeholder: { bm: "Cari pengguna...", en: "Search users..." },
+  friends_send_request: { bm: "Tambah", en: "Add Friend" },
+  friends_accept: { bm: "Terima", en: "Accept" },
+  friends_decline: { bm: "Tolak", en: "Decline" },
+  friends_remove: { bm: "Buang", en: "Remove" },
+  friends_cancel: { bm: "Batal", en: "Cancel" },
+  friends_no_friends: { bm: "Belum ada rakan. Cari pengguna untuk mula.", en: "No friends yet. Search for users to start." },
+  friends_no_requests: { bm: "Tiada permintaan rakan.", en: "No pending requests." },
+  friends_no_results: { bm: "Tiada pengguna ditemui.", en: "No users found." },
+  friends_pending: { bm: "Permintaan", en: "Pending" },
+  friends_sent: { bm: "Dihantar", en: "Sent" },
+  friends_search_results: { bm: "Hasil Carian", en: "Search Results" },
+  friends_requests: { bm: "Permintaan Rakan", en: "Friend Requests" },
+  friends_self_request: { bm: "Tidak boleh hantar kepada diri sendiri.", en: "Cannot send request to yourself." },
+  friends_already_friends: { bm: "Sudah menjadi rakan.", en: "Already friends." },
+  friends_already_pending: { bm: "Permintaan sudah dihantar.", en: "Request already sent." },
+  friends_request_sent: { bm: "Permintaan dihantar!", en: "Request sent!" },
+  friends_request_accepted: { bm: "Permintaan diterima!", en: "Request accepted!" },
+  friends_tab_all: { bm: "Semua", en: "All" },
+  friends_tab_pending: { bm: "Permintaan", en: "Requests" },
+  friends_tab_search: { bm: "Cari", en: "Search" },
+  // Public profile
+  public_profile_title: { bm: "Profil", en: "Profile" },
+  public_profile_friends: { bm: "Rakan", en: "Friends" },
 } as const;
 
 export type StringKey = keyof typeof STRINGS;
