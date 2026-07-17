@@ -8,6 +8,7 @@ compatibility_flags = ["nodejs_compat"]
 [vars]
 SUPABASE_URL = "https://lyehlfgqclrxinyzfpao.supabase.co"
 SUPABASE_PUBLISHABLE_KEY = "sb_publishable_Y5wYSz0k4_oOaRmJLsDVvg_ek20GBgP"
+SUPABASE_SERVICE_ROLE_KEY = "sb_secret_MJ-tgJblfa2UZlTLsLQEOA_6Og56heK"
 SUPABASE_PROJECT_ID = "lyehlfgqclrxinyzfpao"
 VITE_SUPABASE_URL = "https://lyehlfgqclrxinyzfpao.supabase.co"
 VITE_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_Y5wYSz0k4_oOaRmJLsDVvg_ek20GBgP"
