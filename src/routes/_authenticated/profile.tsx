@@ -22,9 +22,9 @@ async function fetchProfile() {
   const [{ data: profile }, { data: prog }, { data: scanned }, { data: earnedBadges }, { data: earnedAch }, { data: allBadges }, { data: allAch }] = await Promise.all([
     supabase.from("profiles").select("username").eq("id", uid ?? "").maybeSingle(),
     supabase.from("user_progress").select("*").eq("user_id", uid ?? "").maybeSingle(),
-    supabase.from("user_artifact_progress").select("artifact_id"),
-    supabase.from("user_badges").select("badge_id, earned_at"),
-    supabase.from("user_achievements").select("achievement_id, earned_at"),
+    supabase.from("user_artifact_progress").select("artifact_id").eq("user_id", uid ?? ""),
+    supabase.from("user_badges").select("badge_id, earned_at").eq("user_id", uid ?? ""),
+    supabase.from("user_achievements").select("achievement_id, earned_at").eq("user_id", uid ?? ""),
     supabase.from("badges").select("*").order("sort_order"),
     supabase.from("achievements").select("*").order("sort_order"),
   ]);

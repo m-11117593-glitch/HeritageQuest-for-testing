@@ -14,12 +14,14 @@ export const Route = createFileRoute("/_authenticated/quizzes")({
 });
 
 async function fetchQuizzes() {
+  const { data: authData } = await supabase.auth.getUser();
+  const uid = authData.user?.id;
   const [{ data: artifacts }, { data: progress }] = await Promise.all([
     supabase
       .from("artifacts")
       .select("id, category, name_bm, name_en, image_url")
       .order("sort_order"),
-    supabase.from("user_artifact_progress").select("*")
+    supabase.from("user_artifact_progress").select("*").eq("user_id", uid ?? "")
   ]);
 
   const progressMap = new Map((progress ?? []).map((p) => [p.artifact_id, p]));
