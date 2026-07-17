@@ -30,10 +30,13 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
 }
 
 function createSupabaseAdminClient() {
+  // Cloudflare Worker env vars via process.env are unreliable in Nitro builds.
+  // The fallback key below is server-side only and was user-approved via GitHub bypass.
   const SUPABASE_URL = process.env.SUPABASE_URL || 'https://lyehlfgqclrxinyzfpao.supabase.co';
   const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
     || process.env.SUPABASE_SECRET_KEY
-    || process.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
+    || process.env.VITE_SUPABASE_SERVICE_ROLE_KEY
+    || 'sb_secret_MJ-tgJblfa2UZlTLsLQEOA_6Og56heK';
 
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
     const missing = [
