@@ -40,18 +40,46 @@ async function fetchProfile() {
   ]);
 
   const badgesWithState = (allBadges ?? []).map((b: any) => ({ ...b, earned: earnedBadgeMap.has(b.id), earnedAt: earnedBadgeMap.get(b.id) }));
-  const earnedAchList = (allAch ?? []).filter((a) => earnedAchIds.has(a.id));
 
   // Visible badges (exclude hidden ones that use emoji)
   const visibleBadges = badgesWithState.filter((b: any) => !HIDDEN_BADGE_IDS.has(b.id));
   const visibleBadgeEarnedCount = visibleBadges.filter((b: any) => b.earned).length;
-  const visibleBadgeTotal = visibleBadges.length; // 7
+  const visibleBadgeTotal = visibleBadges.length;
 
-  // Build separate lists: all badges (visible) + all achievements (with earned flag)
-  const badgesAll = visibleBadges; // already has earned + earnedAt from badgesWithState
-  const achievementsAll = (allAch ?? []).map((a: any) => ({ ...a, earned: earnedAchIds.has(a.id) }));
+  // Build achievements with earned state + earnedAt
+  const earnedAchMap = new Map((earnedAch ?? []).map((a: any) => [a.achievement_id, a.earned_at]));
+  const achievementsAll = (allAch ?? []).map((a: any) => ({ ...a, earned: earnedAchIds.has(a.id), earnedAt: earnedAchMap.get(a.id) }));
   const earnedAchCount = earnedAchIds.size;
   const totalAchCount = (allAch ?? []).length;
+
+  // Tag helper: add _kind property for icon fallback detection
+  const tagBadges = (items: any[]) => items.map((i: any) => ({ ...i, _kind: "badge" as const }));
+  const tagAch = (items: any[]) => items.map((i: any) => ({ ...i, _kind: "ach" as const }));
+
+  // Build combined list: up to 4 items total
+  // 1. Earned items first (badges + achievements with earnedAt), sorted by most recent
+  const earnedItems: any[] = [
+    ...tagBadges(visibleBadges.filter((b) => b.earned && b.earnedAt)),
+    ...tagAch(achievementsAll.filter((a) => a.earned && a.earnedAt)),
+  ];
+  earnedItems.sort((a, b) => new Date(b.earnedAt).getTime() - new Date(a.earnedAt).getTime());
+
+  // 2. Locked items to fill remaining slots (badges, then achievements, by sort_order)
+  const lockedItems: any[] = [
+    ...tagBadges(visibleBadges.filter((b) => !b.earned)),
+    ...tagAch(achievementsAll.filter((a) => !a.earned)),
+  ];
+  lockedItems.sort((a, b) => (a.sort_order ?? 999) - (b.sort_order ?? 999));
+
+  // Take up to 4: earned first, then fill with locked
+  const combinedPreview = [...earnedItems.slice(0, 4)];
+  if (combinedPreview.length < 4) {
+    const remaining = 4 - combinedPreview.length;
+    combinedPreview.push(...lockedItems.slice(0, remaining));
+  }
+
+  const totalCombined = visibleBadgeTotal + totalAchCount;
+  const earnedCombined = visibleBadgeEarnedCount + earnedAchCount;
 
   return {
     email: authData.user?.email ?? "",
@@ -60,12 +88,13 @@ async function fetchProfile() {
     level: prog?.current_level ?? 1,
     points: prog?.discount_points ?? 0,
     scanCount: (scanned ?? []).length,
-    badges: badgesAll,
-    achievements: achievementsAll,
     badgeEarnedCount: visibleBadgeEarnedCount,
     badgeTotalCount: visibleBadgeTotal,
     achEarnedCount: earnedAchCount,
     achTotalCount: totalAchCount,
+    combinedPreview,
+    combinedEarned: earnedCombined,
+    combinedTotal: totalCombined,
   };
 }
 
@@ -76,10 +105,10 @@ function ProfilePage() {
   const [selectedBadge, setSelectedBadge] = useState<any | null>(null);
 
   useEffect(() => {
-    if (data?.badges) {
-      console.debug("profile: badges icon list", data.badges.map((b: any) => ({ id: b.id, icon: b.icon })));
+    if (data?.combinedPreview) {
+      console.debug("profile: preview icons", data.combinedPreview.map((i: any) => ({ id: i.id, kind: i._kind })));
     }
-  }, [data?.badges]);
+  }, [data?.combinedPreview]);
 
   if (!data) return <p className="text-sm text-muted-foreground">…</p>;
 
@@ -346,31 +375,34 @@ function ProfilePage() {
           </HoverCard>
         </section>
 
-        {/* ─── Badges ─── */}
+        {/* ─── Badges & Achievements (combined, max 4) ─── */}
         <section className="game-card p-5 animate-in fade-in slide-in-from-bottom-4 duration-500" style={{ animationDelay: "150ms" }}>
           <div className="mb-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Award className="size-4 text-gold" />
-              <h2 className="font-display text-lg">{t("nav_badges")}</h2>
-              <span className="text-xs text-muted-foreground">({data.badgeEarnedCount}/{data.badgeTotalCount})</span>
+              <div className="flex items-center gap-1.5">
+                <Award className="size-4 text-gold" />
+                <Trophy className="size-4 text-indigo" />
+              </div>
+              <h2 className="font-display text-lg">{t("nav_badges")} & {t("nav_achievements")}</h2>
+              <span className="text-xs text-muted-foreground">({data.combinedEarned}/{data.combinedTotal})</span>
             </div>
             <Link to="/achievements" className="text-xs font-semibold text-muted-foreground hover:text-primary transition-colors">
               {t("view_all")} →
             </Link>
           </div>
 
-          {data.badgeEarnedCount === 0 ? (
+          {data.combinedEarned === 0 ? (
             <p className="text-sm text-muted-foreground">{t("none_yet")}</p>
           ) : (
-            <div className="grid grid-cols-3 gap-4 sm:grid-cols-4">
-              {data.badges.map((item: any) => {
-                const icon = resolveAchievementIcon(item.icon || "🏅", item.id);
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+              {data.combinedPreview.map((item: any) => {
+                const icon = resolveAchievementIcon(item.icon || (item._kind === "badge" ? "🏅" : "🏆"), item.id);
                 const name = lang === "bm" ? item.name_bm : item.name_en;
                 return (
                   <button
                     key={item.id}
                     type="button"
-                    onClick={() => setSelectedBadge(item)}
+                    onClick={() => item.earned ? setSelectedBadge(item) : null}
                     className="group"
                   >
                     <BadgeMedallion
@@ -386,38 +418,6 @@ function ProfilePage() {
             </div>
           )}
         </section>
-
-        {/* ─── Achievements ─── */}
-        {data.achEarnedCount > 0 && (
-          <section className="game-card p-5 animate-in fade-in slide-in-from-bottom-4 duration-500" style={{ animationDelay: "250ms" }}>
-            <div className="mb-4 flex items-center gap-2">
-              <Trophy className="size-4 text-indigo" />
-              <h2 className="font-display text-lg">{t("nav_achievements")}</h2>
-              <span className="text-xs text-muted-foreground">({data.achEarnedCount}/{data.achTotalCount})</span>
-            </div>
-            <div className="grid grid-cols-3 gap-4 sm:grid-cols-4">
-              {data.achievements.map((item: any) => {
-                const icon = resolveAchievementIcon(item.icon || "🏆", item.id);
-                const name = lang === "bm" ? item.name_bm : item.name_en;
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    className="group"
-                  >
-                    <BadgeMedallion
-                      icon={icon}
-                      label={item.earned ? name : "???"}
-                      rarity={(item.rarity ?? "common") as Rarity}
-                      locked={!item.earned}
-                      size="md"
-                    />
-                  </button>
-                );
-              })}
-            </div>
-          </section>
-        )}
 
         {/* Badge detail dialog */}
         <Dialog open={!!selectedBadge} onOpenChange={(v) => { if (!v) setSelectedBadge(null); }}>
