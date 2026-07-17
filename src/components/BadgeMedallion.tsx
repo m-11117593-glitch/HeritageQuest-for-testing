@@ -75,6 +75,7 @@ export function BadgeMedallion({ icon, label, sublabel, rarity, locked, size = "
               width: s.disc,
               height: s.disc,
               borderRadius: "50%",
+              overflow: "hidden",
               background: "var(--color-card)",
               border: `2px solid ${locked ? "oklch(0.85 0.01 80)" : style.ring}`,
               boxShadow: "inset 0 0 0 2px oklch(1 0 0 / 0.6)",
@@ -85,7 +86,7 @@ export function BadgeMedallion({ icon, label, sublabel, rarity, locked, size = "
                 src={imgSrc}
                 alt={label}
                 onError={() => setImgFailed(true)}
-                style={{ width: '70%', height: '70%', objectFit: 'cover', filter: locked ? 'grayscale(1) opacity(0.5)' : 'none' }}
+                style={{ width: '100%', height: '100%', objectFit: 'cover', filter: locked ? 'grayscale(1) opacity(0.5)' : 'none' }}
               />
             ) : (
               <span style={{ fontSize: s.emoji, filter: locked ? 'grayscale(1) opacity(0.5)' : 'none' }}>{locked ? '🔒' : icon}</span>
