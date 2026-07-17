@@ -11,6 +11,8 @@ export const Route = createFileRoute("/_authenticated/journal")({
 });
 
 async function fetchJournal() {
+  const { data: authData } = await supabase.auth.getUser();
+  const uid = authData.user?.id;
   const [
     { data: prog },
     { data: scans },
@@ -20,13 +22,13 @@ async function fetchJournal() {
     { data: quests },
     { data: doneQuests },
   ] = await Promise.all([
-    supabase.from("user_progress").select("*").maybeSingle(),
-    supabase.from("user_artifact_progress").select("*").order("scanned_at"),
+    supabase.from("user_progress").select("*").eq("user_id", uid ?? "").maybeSingle(),
+    supabase.from("user_artifact_progress").select("*").eq("user_id", uid ?? "").order("scanned_at"),
     supabase.from("artifacts").select("*"),
     supabase.from("badges").select("*").order("sort_order"),
-    supabase.from("user_badges").select("badge_id"),
+    supabase.from("user_badges").select("badge_id").eq("user_id", uid ?? ""),
     supabase.from("quests").select("*").order("sort_order"),
-    supabase.from("user_quests").select("quest_id"),
+    supabase.from("user_quests").select("quest_id").eq("user_id", uid ?? ""),
   ]);
   const artMap = new Map((artifacts ?? []).map((a) => [a.id, a]));
   const badgeSet = new Set((earnedBadges ?? []).map((b) => b.badge_id));

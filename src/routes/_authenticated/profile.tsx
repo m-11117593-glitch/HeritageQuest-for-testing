@@ -1,7 +1,7 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, Outlet, useRouter } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { Award, Gift, Scroll, ArrowRight, Coins, MapPin, Trophy } from "lucide-react";
+import { Award, Gift, Scroll, ArrowRight, Coins, MapPin, Trophy, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
 import { ExpBar } from "@/components/ExpBar";
@@ -101,8 +101,17 @@ async function fetchProfile() {
 function ProfilePage() {
   const { t, lang } = useI18n();
   const navigate = useNavigate();
+  const router = useRouter();
   const { data } = useQuery({ queryKey: ["profile"], queryFn: fetchProfile });
   const [selectedBadge, setSelectedBadge] = useState<any | null>(null);
+
+  // Detect if a child route (profile/$userId) is active
+  const hasChildRoute = router.state.matches.some(
+    (m) => m.routeId === '/_authenticated/profile/$userId'
+  );
+  if (hasChildRoute) {
+    return <Outlet />;
+  }
 
   useEffect(() => {
     if (data?.combinedPreview) {
@@ -230,7 +239,17 @@ function ProfilePage() {
               <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
                 {t("profile_greeting")}
               </p>
-              <h1 className="truncate font-display text-2xl leading-tight">{data.username}</h1>
+              <div className="flex items-center gap-2">
+                <h1 className="truncate font-display text-2xl leading-tight">{data.username}</h1>
+                <button
+                  type="button"
+                  onClick={() => { sfx.tap(); navigate({ to: "/friends" }); }}
+                  className="bounce-soft shrink-0 inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-primary to-indigo px-3 py-1 text-[11px] font-bold text-white shadow-sm shadow-primary/25 transition-all duration-200 hover:shadow-md hover:shadow-primary/30 active:scale-[0.95]"
+                >
+                  <Users className="size-3" />
+                  {t("nav_friends")}
+                </button>
+              </div>
               <p className="truncate text-xs text-muted-foreground">{data.email}</p>
 
               {/* EXP to next level */}

@@ -27,10 +27,12 @@ const HOVER_KEY: Record<string, StringKey> = {
 };
 
 async function fetchRewards() {
+  const { data: authData } = await supabase.auth.getUser();
+  const uid = authData.user?.id;
   const [{ data: souvenirs }, { data: prog }, { data: reds }] = await Promise.all([
     supabase.from("souvenirs").select("*").order("sort_order"),
-    supabase.from("user_progress").select("discount_points").maybeSingle(),
-    supabase.from("redemptions").select("souvenir_id, redeemed_at").order("redeemed_at", { ascending: false }),
+    supabase.from("user_progress").select("discount_points").eq("user_id", uid ?? "").maybeSingle(),
+    supabase.from("redemptions").select("souvenir_id, redeemed_at").eq("user_id", uid ?? "").order("redeemed_at", { ascending: false }),
   ]);
   return { souvenirs: souvenirs ?? [], balance: prog?.discount_points ?? 0, redemptions: reds ?? [] };
 }

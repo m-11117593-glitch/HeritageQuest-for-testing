@@ -10,6 +10,8 @@ export const Route = createFileRoute("/_authenticated/quests")({
 });
 
 async function fetchQuests() {
+  const { data: authData } = await supabase.auth.getUser();
+  const uid = authData.user?.id;
   const [
     { data: quests },
     { data: done },
@@ -19,11 +21,11 @@ async function fetchQuests() {
     { data: userUq },
   ] = await Promise.all([
     supabase.from("quests").select("*").order("sort_order"),
-    supabase.from("user_quests").select("quest_id"),
-    supabase.from("user_artifact_progress").select("artifact_id"),
+    supabase.from("user_quests").select("quest_id").eq("user_id", uid ?? ""),
+    supabase.from("user_artifact_progress").select("artifact_id").eq("user_id", uid ?? ""),
     supabase.from("artifacts").select("id,category,name_bm,name_en"),
     supabase.from("unique_quest_templates").select("*").order("sort_order"),
-    supabase.from("user_unique_quests").select("*"),
+    supabase.from("user_unique_quests").select("*").eq("user_id", uid ?? ""),
   ]);
   const doneSet = new Set((done ?? []).map((q) => q.quest_id));
   const scannedSet = new Set((scanned ?? []).map((s) => s.artifact_id));
