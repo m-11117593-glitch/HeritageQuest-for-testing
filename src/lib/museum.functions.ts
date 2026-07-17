@@ -1039,13 +1039,14 @@ export const sendFriendRequest = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => friendInput.parse(d))
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
-    const sb = supabase as any;
+    const { userId } = context;
     if (data.receiverId === userId) {
       return { ok: false as const, reason: "self_request" as const };
     }
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const sa: any = supabaseAdmin;
     // Check if already friends or pending
-    const { data: existing } = await sb
+    const { data: existing } = await sa
       .from("friend_requests")
       .select("id, status")
       .or(`and(sender_id.eq.${userId},receiver_id.eq.${data.receiverId}),and(sender_id.eq.${data.receiverId},receiver_id.eq.${userId})`)
@@ -1053,14 +1054,14 @@ export const sendFriendRequest = createServerFn({ method: "POST" })
     if (existing) {
       if (existing.status === "accepted") return { ok: false as const, reason: "already_friends" as const };
       if (existing.status === "pending") return { ok: false as const, reason: "already_pending" as const };
-      const { error } = await sb
+      const { error } = await sa
         .from("friend_requests")
         .update({ status: "pending", updated_at: new Date().toISOString() })
         .eq("id", existing.id);
       if (error) throw new Error(error.message);
       return { ok: true as const };
     }
-    const { error } = await sb
+    const { error } = await sa
       .from("friend_requests")
       .insert({ sender_id: userId, receiver_id: data.receiverId, status: "pending" });
     if (error) throw new Error(error.message);
@@ -1072,9 +1073,10 @@ export const acceptFriendRequest = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => friendInput.parse(d))
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
-    const sb = supabase as any;
-    const { error } = await sb
+    const { userId } = context;
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const sa: any = supabaseAdmin;
+    const { error } = await sa
       .from("friend_requests")
       .update({ status: "accepted", updated_at: new Date().toISOString() })
       .eq("sender_id", data.receiverId)
@@ -1089,9 +1091,10 @@ export const declineFriendRequest = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => friendInput.parse(d))
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
-    const sb = supabase as any;
-    const { error } = await sb
+    const { userId } = context;
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const sa: any = supabaseAdmin;
+    const { error } = await sa
       .from("friend_requests")
       .delete()
       .or(`and(sender_id.eq.${userId},receiver_id.eq.${data.receiverId}),and(sender_id.eq.${data.receiverId},receiver_id.eq.${userId})`)
@@ -1105,9 +1108,10 @@ export const removeFriend = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => friendInput.parse(d))
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
-    const sb = supabase as any;
-    const { error } = await sb
+    const { userId } = context;
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const sa: any = supabaseAdmin;
+    const { error } = await sa
       .from("friend_requests")
       .delete()
       .or(`and(sender_id.eq.${userId},receiver_id.eq.${data.receiverId}),and(sender_id.eq.${data.receiverId},receiver_id.eq.${userId})`)
@@ -1132,8 +1136,9 @@ export const getFriends = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<FriendUser[]> => {
     const { userId } = context;
-    const sb = context.supabase as any;
-    const { data: requests } = await sb
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const sa: any = supabaseAdmin;
+    const { data: requests } = await sa
       .from("friend_requests")
       .select("*")
       .or(`sender_id.eq.${userId},receiver_id.eq.${userId}`)
@@ -1172,9 +1177,6 @@ export const getFriends = createServerFn({ method: "GET" })
 
     const uids = results.map((r) => r.userId);
     if (uids.length > 0) {
-      // Use supabaseAdmin to bypass RLS and read friends' data
-      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-      const sa = supabaseAdmin as any;
       const [{ data: profiles }, { data: progress }, { data: scans }, { data: badges }] = await Promise.all([
         sa.from("profiles").select("id, username").in("id", uids),
         sa.from("user_progress").select("user_id, total_exp, current_level").in("user_id", uids),
