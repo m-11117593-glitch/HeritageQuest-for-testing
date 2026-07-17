@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, Outlet, useRouter } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { Award, Gift, Scroll, ArrowRight, Coins, MapPin, Trophy } from "lucide-react";
@@ -101,8 +101,17 @@ async function fetchProfile() {
 function ProfilePage() {
   const { t, lang } = useI18n();
   const navigate = useNavigate();
+  const router = useRouter();
   const { data } = useQuery({ queryKey: ["profile"], queryFn: fetchProfile });
   const [selectedBadge, setSelectedBadge] = useState<any | null>(null);
+
+  // Detect if a child route (profile/$userId) is active
+  const hasChildRoute = router.state.matches.some(
+    (m) => m.routeId === '/_authenticated/profile/$userId'
+  );
+  if (hasChildRoute) {
+    return <Outlet />;
+  }
 
   useEffect(() => {
     if (data?.combinedPreview) {
