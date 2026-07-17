@@ -53,6 +53,9 @@ function FriendsPage() {
     try {
       const results = await searchFn({ data: { q: searchQuery.trim() } });
       setSearchResults(results);
+    } catch (e) {
+      console.error("[friends] search error:", e);
+      sfx.error();
     } finally {
       setSearching(false);
     }
@@ -66,8 +69,12 @@ function FriendsPage() {
         sfx.pop();
         qc.invalidateQueries({ queryKey: ["friends"] });
       } else {
+        console.warn("[friends] send failed:", res);
         sfx.error();
       }
+    } catch (e) {
+      console.error("[friends] send error:", e);
+      sfx.error();
     } finally {
       setBusyId(null);
     }
