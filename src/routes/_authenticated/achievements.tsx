@@ -21,11 +21,13 @@ const HIDDEN_BADGE_IDS = new Set([
 ]);
 
 async function fetchAll() {
+  const { data: authData } = await supabase.auth.getUser();
+  const uid = authData.user?.id;
   const [{ data: badges }, { data: achievements }, { data: earnedBadges }, { data: earnedAch }] = await Promise.all([
     supabase.from("badges").select("*").order("sort_order"),
     supabase.from("achievements").select("*").order("sort_order"),
-    supabase.from("user_badges").select("badge_id"),
-    supabase.from("user_achievements").select("achievement_id"),
+    supabase.from("user_badges").select("badge_id").eq("user_id", uid ?? ""),
+    supabase.from("user_achievements").select("achievement_id").eq("user_id", uid ?? ""),
   ]);
   const earnedBadgeIds = new Set((earnedBadges ?? []).map((b) => b.badge_id));
   const earnedAchIds = new Set((earnedAch ?? []).map((a) => a.achievement_id));
