@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Map, Flag, User, ScanLine, Volume2, VolumeX, LogOut, Award, Trophy, Users } from "lucide-react";
+import { Map, Flag, User, ScanLine, Volume2, VolumeX, LogOut, Award, Trophy } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { useI18n } from "@/lib/i18n";
 import { LanguageToggle } from "@/components/LanguageToggle";
@@ -25,13 +25,12 @@ export function AppShell({ children }: { children: ReactNode }) {
   function toggleMute() { const n = !muted; setMuted(n); sfx.setMuted(n); if (!n) sfx.pop(); }
   async function signOut() { await qc.cancelQueries(); qc.clear(); await supabase.auth.signOut(); nav({ to: "/auth", replace: true }); }
 
-  const items: Array<{ to: "/scan" | "/map" | "/quizzes" | "/quests" | "/leaderboard" | "/friends" | "/profile"; icon: typeof Map; label: string; hero?: boolean }> = [
+  const items: Array<{ to: "/scan" | "/map" | "/quizzes" | "/quests" | "/leaderboard" | "/profile"; icon: typeof Map; label: string; hero?: boolean }> = [
     { to: "/scan",    icon: ScanLine, label: t("nav_scan"),    hero: true },
     { to: "/map",     icon: Map,      label: t("nav_map") },
     { to: "/quizzes", icon: Award,    label: t("nav_quizzes") },
     { to: "/quests",  icon: Flag,     label: t("nav_quests") },
     { to: "/leaderboard", icon: Trophy, label: t("nav_leaderboard") },
-    { to: "/friends", icon: Users,    label: t("nav_friends") },
     { to: "/profile", icon: User,     label: t("nav_profile") },
   ];
 
