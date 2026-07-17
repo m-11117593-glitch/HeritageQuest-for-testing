@@ -42,6 +42,8 @@ type MapArtifact = {
 };
 
 async function fetchMap() {
+  const { data: authData } = await supabase.auth.getUser();
+  const uid = authData.user?.id;
   const [{ data: artifacts }, { data: progress }] = await Promise.all([
     supabase
       .from("artifacts")
@@ -49,7 +51,7 @@ async function fetchMap() {
         "id, category, name_bm, name_en, description_bm, description_en, era_bm, era_en, origin_bm, origin_en, material_bm, material_en, image_url, sort_order",
       )
       .order("sort_order"),
-    supabase.from("user_artifact_progress").select("*"),
+    supabase.from("user_artifact_progress").select("*").eq("user_id", uid ?? ""),
   ]);
 
   const progressMap = new Map((progress ?? []).map((p) => [p.artifact_id, p]));
