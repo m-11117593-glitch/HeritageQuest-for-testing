@@ -85,7 +85,7 @@ export function BadgeMedallion({ icon, label, sublabel, rarity, locked, size = "
                 src={imgSrc}
                 alt={label}
                 onError={() => setImgFailed(true)}
-                style={{ width: '70%', height: '70%', objectFit: 'contain', filter: locked ? 'grayscale(1) opacity(0.5)' : 'none' }}
+                style={{ width: '70%', height: '70%', objectFit: 'cover', filter: locked ? 'grayscale(1) opacity(0.5)' : 'none' }}
               />
             ) : (
               <span style={{ fontSize: s.emoji, filter: locked ? 'grayscale(1) opacity(0.5)' : 'none' }}>{locked ? '🔒' : icon}</span>
