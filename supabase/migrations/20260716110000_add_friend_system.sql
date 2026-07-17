@@ -51,3 +51,9 @@ CREATE POLICY "Users can delete their own friend requests"
   FOR DELETE
   TO authenticated
   USING (sender_id = auth.uid() OR receiver_id = auth.uid());
+
+-- 5. Allow searching other users' profiles (needed for friend search feature)
+-- The existing "own profile read" only allows reading your own profile.
+-- This broader policy is required for the username search to work.
+CREATE POLICY "profiles search read" ON public.profiles
+  FOR SELECT TO authenticated USING (true);
