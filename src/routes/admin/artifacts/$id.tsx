@@ -1,8 +1,8 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState, useRef } from "react";
-import { ArrowLeft, Upload, Save, Loader2, Trash2, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Upload, Save, Loader2, Trash2, AlertTriangle, HelpCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { updateArtifact, uploadArtifactImage, deleteArtifact } from "@/lib/admin.functions";
 
@@ -361,6 +361,14 @@ function EditArtifactPage() {
         <button type="button" onClick={() => nav({ to: "/admin/artifacts" })} className="rounded-xl border-2 border-border px-6 py-3 text-sm font-medium text-muted-foreground transition-colors hover:text-ink">
           Cancel
         </button>
+        <Link
+          to="/admin/artifacts/$id/quizzes"
+          params={{ id }}
+          className="inline-flex items-center gap-2 rounded-xl border-2 border-border px-4 py-3 text-sm font-medium text-muted-foreground transition-colors hover:border-primary/30 hover:text-ink"
+        >
+          <HelpCircle className="size-4" />
+          Quizzes
+        </Link>
         <div className="flex-1" />
         <button
           type="button"

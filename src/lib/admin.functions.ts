@@ -199,25 +199,86 @@ export const deleteArtifact = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-// ── Generate Quiz Questions (Phase 6 placeholder) ──
-export const generateQuizQuestions = createServerFn({ method: "POST" })
+// ── Quiz Question CRUD ──
+
+const quizQuestionSchema = z.object({
+  id: z.string().uuid().optional(), // omitted = create, present = update
+  artifact_id: z.string().min(1),
+  prompt_bm: z.string().min(1),
+  prompt_en: z.string().min(1),
+  options_bm: z.array(z.string()).length(4),
+  options_en: z.array(z.string()).length(4),
+  correct_index: z.number().int().min(0).max(3),
+  difficulty: z.number().int().min(1).max(5),
+  sort_order: z.number().int().optional(),
+});
+
+export const saveQuizQuestion = createServerFn({ method: "POST" })
+  .inputValidator((d) => quizQuestionSchema.parse(d))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const sa: any = supabaseAdmin;
+
+    const payload = {
+      artifact_id: data.artifact_id,
+      prompt_bm: data.prompt_bm,
+      prompt_en: data.prompt_en,
+      options_bm: JSON.stringify(data.options_bm),
+      options_en: JSON.stringify(data.options_en),
+      correct_index: data.correct_index,
+      difficulty: data.difficulty,
+      sort_order: data.sort_order ?? 0,
+    };
+
+    if (data.id) {
+      // Update existing
+      const { error } = await sa
+        .from("artifact_quiz_questions")
+        .update({ ...payload, updated_at: new Date().toISOString() })
+        .eq("id", data.id);
+
+      if (error) throw new Error(`Failed to update question: ${error.message}`);
+      return { ok: true, id: data.id };
+    } else {
+      // Create new
+      const { data: inserted, error } = await sa
+        .from("artifact_quiz_questions")
+        .insert(payload)
+        .select("id")
+        .single();
+
+      if (error) throw new Error(`Failed to create question: ${error.message}`);
+      return { ok: true, id: inserted.id };
+    }
+  });
+
+export const deleteQuizQuestion = createServerFn({ method: "POST" })
+  .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const sa: any = supabaseAdmin;
+
+    const { error } = await sa
+      .from("artifact_quiz_questions")
+      .delete()
+      .eq("id", data.id);
+
+    if (error) throw new Error(`Failed to delete question: ${error.message}`);
+    return { ok: true };
+  });
+
+export const getQuizQuestions = createServerFn({ method: "GET" })
   .inputValidator((d) => z.object({ artifactId: z.string().min(1) }).parse(d))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const sa: any = supabaseAdmin;
 
-    const { data: artifact } = await sa
-      .from("artifacts")
-      .select("id, name_bm, name_en, category, era_bm, era_en, origin_bm, origin_en, material_bm, material_en, description_bm, description_en")
-      .eq("id", data.artifactId)
-      .maybeSingle();
+    const { data: questions, error } = await sa
+      .from("artifact_quiz_questions")
+      .select("*")
+      .eq("artifact_id", data.artifactId)
+      .order("sort_order", { ascending: true });
 
-    if (!artifact) throw new Error("Artifact not found");
-
-    // Phase 6: Integrate OpenRouter AI here
-    return {
-      ok: true,
-      message: "AI generation coming in Phase 6",
-      questions: [],
-    };
+    if (error) throw new Error(`Failed to fetch questions: ${error.message}`);
+    return { ok: true, questions: questions ?? [] };
   });
