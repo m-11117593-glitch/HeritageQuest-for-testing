@@ -39,6 +39,15 @@ const EMPTY_FORM: QuestionForm = {
   difficulty: 3,
 };
 
+/** Safely parse JSONB options that might be stored as string or array */
+function safeParseOptions(val: unknown): string[] {
+  if (Array.isArray(val)) return val as string[];
+  if (typeof val === "string") {
+    try { return JSON.parse(val); } catch { return ["", "", "", ""]; }
+  }
+  return ["", "", "", ""];
+}
+
 function QuizManagerPage() {
   const { id: artifactId } = Route.useParams();
   const nav = useNavigate();
@@ -108,8 +117,8 @@ function QuizManagerPage() {
       id: q.id,
       prompt_bm: q.prompt_bm,
       prompt_en: q.prompt_en,
-      options_bm: q.options_bm,
-      options_en: q.options_en,
+      options_bm: safeParseOptions(q.options_bm),
+      options_en: safeParseOptions(q.options_en),
       correct_index: q.correct_index,
       difficulty: q.difficulty,
     });
@@ -478,7 +487,7 @@ function QuizManagerPage() {
                   </div>
                   {/* Options preview */}
                   <div className="mt-2 grid grid-cols-2 gap-1.5">
-                    {(q.options_en as string[]).map((opt: string, i: number) => (
+                    {safeParseOptions(q.options_en).map((opt: string, i: number) => (
                       <div
                         key={i}
                         className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[11px] ${
