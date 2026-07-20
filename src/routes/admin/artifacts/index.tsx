@@ -58,9 +58,11 @@ function AdminArtifactsList() {
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {artifacts?.map((a) => (
-            <div
+            <Link
               key={a.id}
-              className="flex items-center gap-3 rounded-xl border-2 border-border bg-card px-4 py-3 transition-all hover:border-primary/30 hover:shadow-sm"
+              to="/admin/artifacts/$id"
+              params={{ id: a.id }}
+              className="flex items-center gap-3 rounded-xl border-2 border-border bg-card px-4 py-3 transition-all hover:border-primary/30 hover:shadow-sm hover:-translate-y-0.5 active:scale-[0.99]"
             >
               <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-accent text-lg">
                 {CATEGORY_EMOJI[a.category] ?? "📦"}
@@ -70,7 +72,7 @@ function AdminArtifactsList() {
                 <p className="text-xs text-muted-foreground capitalize">{a.category}</p>
               </div>
               <span className="text-[10px] uppercase tracking-wider text-muted-foreground/40">{a.id}</span>
-            </div>
+            </Link>
           ))}
           {(!artifacts || artifacts.length === 0) && (
             <div className="col-span-full flex flex-col items-center gap-4 py-16 text-center">

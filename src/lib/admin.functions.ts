@@ -61,13 +61,25 @@ export const createArtifact = createServerFn({ method: "POST" })
     return { ok: true, id: data.id };
   });
 
+// ── Ensure storage bucket exists (auto-create if missing) ──
+async function ensureBucket(sa: any): Promise<void> {
+  const { data: buckets } = await sa.storage.listBuckets();
+  if (!buckets?.find((b: any) => b.id === "artifact-images")) {
+    await sa.storage.createBucket("artifact-images", {
+      public: true,
+      file_size_limit: 5242880,
+      allowed_mime_types: ["image/jpeg", "image/png", "image/webp"],
+    });
+  }
+}
+
 // ── Upload Image to Supabase Storage ──
 
 const uploadImageInput = z.object({
   artifactId: z.string().min(1),
   fileIndex: z.number().int().min(0).max(2),
   fileName: z.string().min(1),
-  fileBase64: z.string().min(1), // base64-encoded image data
+  fileBase64: z.string().min(1),
 });
 
 export const uploadArtifactImage = createServerFn({ method: "POST" })
@@ -75,6 +87,9 @@ export const uploadArtifactImage = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const sa: any = supabaseAdmin;
+
+    // Auto-create bucket if missing
+    await ensureBucket(sa);
 
     // Decode base64 to buffer
     const base64Data = data.fileBase64.replace(/^data:image\/\w+;base64,/, "");
@@ -97,6 +112,56 @@ export const uploadArtifactImage = createServerFn({ method: "POST" })
       .getPublicUrl(storagePath);
 
     return { ok: true, url: publicUrl.publicUrl };
+  });
+
+// ── Update Artifact ──
+
+const updateArtifactInput = z.object({
+  id: z.string().min(1),
+  category: z.string().min(1),
+  name_bm: z.string().min(1),
+  name_en: z.string().min(1),
+  description_bm: z.string().min(1),
+  description_en: z.string().min(1),
+  era_bm: z.string().min(1),
+  era_en: z.string().min(1),
+  origin_bm: z.string().min(1),
+  origin_en: z.string().min(1),
+  material_bm: z.string().min(1),
+  material_en: z.string().min(1),
+  image_url: z.string().nullable().optional(),
+  image_url_2: z.string().nullable().optional(),
+  image_url_3: z.string().nullable().optional(),
+});
+
+export const updateArtifact = createServerFn({ method: "POST" })
+  .inputValidator((d) => updateArtifactInput.parse(d))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const sa: any = supabaseAdmin;
+
+    const { error } = await sa
+      .from("artifacts")
+      .update({
+        category: data.category,
+        name_bm: data.name_bm,
+        name_en: data.name_en,
+        description_bm: data.description_bm,
+        description_en: data.description_en,
+        era_bm: data.era_bm,
+        era_en: data.era_en,
+        origin_bm: data.origin_bm,
+        origin_en: data.origin_en,
+        material_bm: data.material_bm,
+        material_en: data.material_en,
+        image_url: data.image_url ?? null,
+        image_url_2: data.image_url_2 ?? null,
+        image_url_3: data.image_url_3 ?? null,
+      })
+      .eq("id", data.id);
+
+    if (error) throw new Error(`Failed to update artifact: ${error.message}`);
+    return { ok: true, id: data.id };
   });
 
 // ── Generate Quiz Questions (Phase 6 placeholder) ──

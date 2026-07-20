@@ -28,6 +28,7 @@ import { Route as AuthenticatedFriendsRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedAchievementsRouteImport } from './routes/_authenticated/achievements'
 import { Route as AdminArtifactsIndexRouteImport } from './routes/admin/artifacts/index'
 import { Route as AdminArtifactsNewRouteImport } from './routes/admin/artifacts/new'
+import { Route as AdminArtifactsIdRouteImport } from './routes/admin/artifacts/$id'
 import { Route as AuthenticatedProfileUserIdRouteImport } from './routes/_authenticated/profile.$userId'
 import { Route as AuthenticatedArtifactIdRouteImport } from './routes/_authenticated/artifact.$id'
 
@@ -127,6 +128,11 @@ const AdminArtifactsNewRoute = AdminArtifactsNewRouteImport.update({
   path: '/artifacts/new',
   getParentRoute: () => AdminRouteRoute,
 } as any)
+const AdminArtifactsIdRoute = AdminArtifactsIdRouteImport.update({
+  id: '/artifacts/$id',
+  path: '/artifacts/$id',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
 const AuthenticatedProfileUserIdRoute =
   AuthenticatedProfileUserIdRouteImport.update({
     id: '/$userId',
@@ -158,6 +164,7 @@ export interface FileRoutesByFullPath {
   '/admin/': typeof AdminIndexRoute
   '/artifact/$id': typeof AuthenticatedArtifactIdRoute
   '/profile/$userId': typeof AuthenticatedProfileUserIdRoute
+  '/admin/artifacts/$id': typeof AdminArtifactsIdRoute
   '/admin/artifacts/new': typeof AdminArtifactsNewRoute
   '/admin/artifacts/': typeof AdminArtifactsIndexRoute
 }
@@ -179,6 +186,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminIndexRoute
   '/artifact/$id': typeof AuthenticatedArtifactIdRoute
   '/profile/$userId': typeof AuthenticatedProfileUserIdRoute
+  '/admin/artifacts/$id': typeof AdminArtifactsIdRoute
   '/admin/artifacts/new': typeof AdminArtifactsNewRoute
   '/admin/artifacts': typeof AdminArtifactsIndexRoute
 }
@@ -203,6 +211,7 @@ export interface FileRoutesById {
   '/admin/': typeof AdminIndexRoute
   '/_authenticated/artifact/$id': typeof AuthenticatedArtifactIdRoute
   '/_authenticated/profile/$userId': typeof AuthenticatedProfileUserIdRoute
+  '/admin/artifacts/$id': typeof AdminArtifactsIdRoute
   '/admin/artifacts/new': typeof AdminArtifactsNewRoute
   '/admin/artifacts/': typeof AdminArtifactsIndexRoute
 }
@@ -227,6 +236,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/artifact/$id'
     | '/profile/$userId'
+    | '/admin/artifacts/$id'
     | '/admin/artifacts/new'
     | '/admin/artifacts/'
   fileRoutesByTo: FileRoutesByTo
@@ -248,6 +258,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/artifact/$id'
     | '/profile/$userId'
+    | '/admin/artifacts/$id'
     | '/admin/artifacts/new'
     | '/admin/artifacts'
   id:
@@ -271,6 +282,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/_authenticated/artifact/$id'
     | '/_authenticated/profile/$userId'
+    | '/admin/artifacts/$id'
     | '/admin/artifacts/new'
     | '/admin/artifacts/'
   fileRoutesById: FileRoutesById
@@ -418,6 +430,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminArtifactsNewRouteImport
       parentRoute: typeof AdminRouteRoute
     }
+    '/admin/artifacts/$id': {
+      id: '/admin/artifacts/$id'
+      path: '/artifacts/$id'
+      fullPath: '/admin/artifacts/$id'
+      preLoaderRoute: typeof AdminArtifactsIdRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
     '/_authenticated/profile/$userId': {
       id: '/_authenticated/profile/$userId'
       path: '/$userId'
@@ -481,12 +500,14 @@ const AuthenticatedRouteRouteWithChildren =
 
 interface AdminRouteRouteChildren {
   AdminIndexRoute: typeof AdminIndexRoute
+  AdminArtifactsIdRoute: typeof AdminArtifactsIdRoute
   AdminArtifactsNewRoute: typeof AdminArtifactsNewRoute
   AdminArtifactsIndexRoute: typeof AdminArtifactsIndexRoute
 }
 
 const AdminRouteRouteChildren: AdminRouteRouteChildren = {
   AdminIndexRoute: AdminIndexRoute,
+  AdminArtifactsIdRoute: AdminArtifactsIdRoute,
   AdminArtifactsNewRoute: AdminArtifactsNewRoute,
   AdminArtifactsIndexRoute: AdminArtifactsIndexRoute,
 }
