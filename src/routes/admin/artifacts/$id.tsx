@@ -2,9 +2,9 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState, useRef } from "react";
-import { ArrowLeft, Upload, Save, Loader2, Trash2 } from "lucide-react";
+import { ArrowLeft, Upload, Save, Loader2, Trash2, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { updateArtifact, uploadArtifactImage } from "@/lib/admin.functions";
+import { updateArtifact, uploadArtifactImage, deleteArtifact } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/admin/artifacts/$id")({
   component: EditArtifactPage,
@@ -24,9 +24,13 @@ function EditArtifactPage() {
   const updateFn = useServerFn(updateArtifact);
   const uploadFn = useServerFn(uploadArtifactImage);
 
+  const deleteFn = useServerFn(deleteArtifact);
+
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   // Form fields
   const [nameBm, setNameBm] = useState("");
@@ -116,6 +120,20 @@ function EditArtifactPage() {
       next[index] = null;
       return next;
     });
+  }
+
+  async function handleDelete() {
+    if (deleting) return;
+    setDeleting(true);
+    try {
+      await deleteFn({ data: { id } });
+      nav({ to: "/admin/artifacts" });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete artifact");
+      setShowDeleteConfirm(false);
+    } finally {
+      setDeleting(false);
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -343,7 +361,57 @@ function EditArtifactPage() {
         <button type="button" onClick={() => nav({ to: "/admin/artifacts" })} className="rounded-xl border-2 border-border px-6 py-3 text-sm font-medium text-muted-foreground transition-colors hover:text-ink">
           Cancel
         </button>
+        <div className="flex-1" />
+        <button
+          type="button"
+          onClick={() => setShowDeleteConfirm(true)}
+          className="inline-flex items-center gap-2 rounded-xl border-2 border-destructive/30 px-6 py-3 text-sm font-semibold text-destructive transition-all hover:bg-destructive/10 active:scale-95"
+        >
+          <Trash2 className="size-4" />
+          Delete
+        </button>
       </div>
+
+      {/* Delete confirmation modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowDeleteConfirm(false)} />
+          <div className="relative w-full max-w-sm rounded-2xl border-2 border-destructive/30 bg-card p-6 shadow-xl animate-in zoom-in-95 fade-in duration-200">
+            <div className="mb-4 flex items-center gap-3">
+              <div className="flex size-12 items-center justify-center rounded-full bg-destructive/15">
+                <AlertTriangle className="size-6 text-destructive" />
+              </div>
+              <div>
+                <h3 className="font-display text-lg font-semibold text-ink">Delete Artifact</h3>
+                <p className="text-sm text-muted-foreground">This action cannot be undone.</p>
+              </div>
+            </div>
+            <p className="mb-6 text-sm text-muted-foreground">
+              Are you sure you want to delete <strong className="text-ink">{nameEn}</strong>?
+              This will permanently remove the artifact, its images, and all user progress data.
+            </p>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={deleting}
+                className="flex-1 rounded-xl border-2 border-border px-4 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:text-ink"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={deleting}
+                className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-destructive px-4 py-2.5 text-sm font-semibold text-destructive-foreground transition-all hover:bg-destructive/90 active:scale-95 disabled:opacity-60"
+              >
+                {deleting ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
+                {deleting ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </form>
   );
 }

@@ -164,6 +164,41 @@ export const updateArtifact = createServerFn({ method: "POST" })
     return { ok: true, id: data.id };
   });
 
+// ── Delete Artifact ──
+
+const deleteArtifactInput = z.object({
+  id: z.string().min(1),
+});
+
+export const deleteArtifact = createServerFn({ method: "POST" })
+  .inputValidator((d) => deleteArtifactInput.parse(d))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const sa: any = supabaseAdmin;
+
+    // 1. Delete storage images for this artifact folder
+    const { data: files } = await sa.storage
+      .from("artifact-images")
+      .list(data.id);
+
+    if (files && files.length > 0) {
+      const paths = files.map((f: any) => `${data.id}/${f.name}`);
+      await sa.storage.from("artifact-images").remove(paths);
+    }
+
+    // 2. Delete user_artifact_progress rows
+    await sa.from("user_artifact_progress").delete().eq("artifact_id", data.id);
+
+    // 3. Delete artifact quest progress if any
+    await sa.from("user_artifact_quest_progress").delete().eq("artifact_id", data.id);
+
+    // 4. Delete the artifact itself
+    const { error } = await sa.from("artifacts").delete().eq("id", data.id);
+
+    if (error) throw new Error(`Failed to delete artifact: ${error.message}`);
+    return { ok: true };
+  });
+
 // ── Generate Quiz Questions (Phase 6 placeholder) ──
 export const generateQuizQuestions = createServerFn({ method: "POST" })
   .inputValidator((d) => z.object({ artifactId: z.string().min(1) }).parse(d))
