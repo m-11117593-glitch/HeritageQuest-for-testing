@@ -1,10 +1,12 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Package,
   FolderKanban,
   FileQuestion,
+  PlusCircle,
+  ArrowRight,
 } from "lucide-react";
 
 export const Route = createFileRoute("/admin/")({
@@ -80,24 +82,32 @@ function AdminDashboard() {
       <section>
         <h2 className="mb-4 font-display text-lg font-semibold text-ink">Quick Actions</h2>
         <div className="grid gap-4 sm:grid-cols-2">
-          <div className="flex items-center gap-4 rounded-xl border-2 border-border bg-card p-5 opacity-60">
+          <Link
+            to="/admin/artifacts/new"
+            className="group flex items-center gap-4 rounded-xl border-2 border-border bg-card p-5 transition-all hover:border-primary/40 hover:shadow-md"
+          >
             <div className="grid size-12 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
+              <PlusCircle className="size-6" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="font-display font-semibold text-ink">Add New Artifact</p>
+              <p className="text-xs text-muted-foreground">Create a new museum artifact with images</p>
+            </div>
+            <ArrowRight className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+          </Link>
+          <Link
+            to="/admin/artifacts"
+            className="group flex items-center gap-4 rounded-xl border-2 border-border bg-card p-5 transition-all hover:border-primary/40 hover:shadow-md"
+          >
+            <div className="grid size-12 shrink-0 place-items-center rounded-lg bg-indigo/10 text-indigo">
               <Package className="size-6" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="font-display font-semibold text-ink">Artifacts Manager</p>
-              <p className="text-xs text-muted-foreground">Coming in Phase 4 — Edit, update, or remove artifacts</p>
+              <p className="font-display font-semibold text-ink">Manage Artifacts</p>
+              <p className="text-xs text-muted-foreground">View, edit, and manage the artifact collection</p>
             </div>
-          </div>
-          <div className="flex items-center gap-4 rounded-xl border-2 border-border bg-card p-5 opacity-60">
-            <div className="grid size-12 shrink-0 place-items-center rounded-lg bg-indigo/10 text-indigo">
-              <FileQuestion className="size-6" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="font-display font-semibold text-ink">Quiz Manager</p>
-              <p className="text-xs text-muted-foreground">Coming in Phase 5 — Create and manage artifact quizzes</p>
-            </div>
-          </div>
+            <ArrowRight className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+          </Link>
         </div>
       </section>
 

@@ -26,6 +26,8 @@ import { Route as AuthenticatedJourneyRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedJournalRouteImport } from './routes/_authenticated/journal'
 import { Route as AuthenticatedFriendsRouteImport } from './routes/_authenticated/friends'
 import { Route as AuthenticatedAchievementsRouteImport } from './routes/_authenticated/achievements'
+import { Route as AdminArtifactsIndexRouteImport } from './routes/admin/artifacts/index'
+import { Route as AdminArtifactsNewRouteImport } from './routes/admin/artifacts/new'
 import { Route as AuthenticatedProfileUserIdRouteImport } from './routes/_authenticated/profile.$userId'
 import { Route as AuthenticatedArtifactIdRouteImport } from './routes/_authenticated/artifact.$id'
 
@@ -115,6 +117,16 @@ const AuthenticatedAchievementsRoute =
     path: '/achievements',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AdminArtifactsIndexRoute = AdminArtifactsIndexRouteImport.update({
+  id: '/artifacts/',
+  path: '/artifacts/',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminArtifactsNewRoute = AdminArtifactsNewRouteImport.update({
+  id: '/artifacts/new',
+  path: '/artifacts/new',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
 const AuthenticatedProfileUserIdRoute =
   AuthenticatedProfileUserIdRouteImport.update({
     id: '/$userId',
@@ -146,6 +158,8 @@ export interface FileRoutesByFullPath {
   '/admin/': typeof AdminIndexRoute
   '/artifact/$id': typeof AuthenticatedArtifactIdRoute
   '/profile/$userId': typeof AuthenticatedProfileUserIdRoute
+  '/admin/artifacts/new': typeof AdminArtifactsNewRoute
+  '/admin/artifacts/': typeof AdminArtifactsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -165,6 +179,8 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminIndexRoute
   '/artifact/$id': typeof AuthenticatedArtifactIdRoute
   '/profile/$userId': typeof AuthenticatedProfileUserIdRoute
+  '/admin/artifacts/new': typeof AdminArtifactsNewRoute
+  '/admin/artifacts': typeof AdminArtifactsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -187,6 +203,8 @@ export interface FileRoutesById {
   '/admin/': typeof AdminIndexRoute
   '/_authenticated/artifact/$id': typeof AuthenticatedArtifactIdRoute
   '/_authenticated/profile/$userId': typeof AuthenticatedProfileUserIdRoute
+  '/admin/artifacts/new': typeof AdminArtifactsNewRoute
+  '/admin/artifacts/': typeof AdminArtifactsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -209,6 +227,8 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/artifact/$id'
     | '/profile/$userId'
+    | '/admin/artifacts/new'
+    | '/admin/artifacts/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -228,6 +248,8 @@ export interface FileRouteTypes {
     | '/admin'
     | '/artifact/$id'
     | '/profile/$userId'
+    | '/admin/artifacts/new'
+    | '/admin/artifacts'
   id:
     | '__root__'
     | '/'
@@ -249,6 +271,8 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/_authenticated/artifact/$id'
     | '/_authenticated/profile/$userId'
+    | '/admin/artifacts/new'
+    | '/admin/artifacts/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -380,6 +404,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAchievementsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/admin/artifacts/': {
+      id: '/admin/artifacts/'
+      path: '/artifacts'
+      fullPath: '/admin/artifacts/'
+      preLoaderRoute: typeof AdminArtifactsIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/admin/artifacts/new': {
+      id: '/admin/artifacts/new'
+      path: '/artifacts/new'
+      fullPath: '/admin/artifacts/new'
+      preLoaderRoute: typeof AdminArtifactsNewRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
     '/_authenticated/profile/$userId': {
       id: '/_authenticated/profile/$userId'
       path: '/$userId'
@@ -443,10 +481,14 @@ const AuthenticatedRouteRouteWithChildren =
 
 interface AdminRouteRouteChildren {
   AdminIndexRoute: typeof AdminIndexRoute
+  AdminArtifactsNewRoute: typeof AdminArtifactsNewRoute
+  AdminArtifactsIndexRoute: typeof AdminArtifactsIndexRoute
 }
 
 const AdminRouteRouteChildren: AdminRouteRouteChildren = {
   AdminIndexRoute: AdminIndexRoute,
+  AdminArtifactsNewRoute: AdminArtifactsNewRoute,
+  AdminArtifactsIndexRoute: AdminArtifactsIndexRoute,
 }
 
 const AdminRouteRouteWithChildren = AdminRouteRoute._addFileChildren(

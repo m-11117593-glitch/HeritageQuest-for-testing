@@ -14,13 +14,15 @@ import { useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface NavItem {
-  to: "/admin";
+  to: "/admin" | "/admin/artifacts" | "/admin/artifacts/new";
   icon: typeof LayoutDashboard;
   label: string;
 }
 
 const NAV_ITEMS: NavItem[] = [
   { to: "/admin", icon: LayoutDashboard, label: "Dashboard" },
+  { to: "/admin/artifacts", icon: Package, label: "Artifacts" },
+  { to: "/admin/artifacts/new", icon: PlusCircle, label: "Add New" },
 ];
 
 export function AdminShell({ children }: { children: ReactNode }) {
@@ -77,25 +79,12 @@ export function AdminShell({ children }: { children: ReactNode }) {
             );
           })}
 
-          {/* Placeholder nav items (routes coming in future phases) */}
+          {/* Categories placeholder */}
           {!collapsed && (
-            <>
-              <div className="px-3 pt-4 pb-1">
-                <p className="text-[10px] font-semibold uppercase tracking-widest text-white/20">Coming Soon</p>
-              </div>
-              <div className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-white/30 cursor-not-allowed">
-                <Package className="size-4.5 shrink-0" />
-                <span className="truncate">Artifacts</span>
-              </div>
-              <div className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-white/30 cursor-not-allowed">
-                <PlusCircle className="size-4.5 shrink-0" />
-                <span className="truncate">Add New</span>
-              </div>
-              <div className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-white/30 cursor-not-allowed">
-                <FolderKanban className="size-4.5 shrink-0" />
-                <span className="truncate">Categories</span>
-              </div>
-            </>
+            <div className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-white/30 cursor-not-allowed">
+              <FolderKanban className="size-4.5 shrink-0" />
+              <span className="truncate">Categories</span>
+            </div>
           )}
         </nav>
 

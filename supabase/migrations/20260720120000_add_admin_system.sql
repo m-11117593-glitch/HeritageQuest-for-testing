@@ -97,3 +97,20 @@ COMMENT ON FUNCTION public.promote_to_admin IS 'Promotes a user to admin role. R
 
 REVOKE EXECUTE ON FUNCTION public.promote_to_admin FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.promote_to_admin TO service_role;
+
+-- ============================================
+-- 6. Create Supabase Storage bucket for artifact images
+-- ============================================
+INSERT INTO storage.buckets (id, name, public, avif_autodetection, file_size_limit, allowed_mime_types)
+SELECT 'artifact-images', 'artifact-images', true, false, 5242880, ARRAY['image/jpeg', 'image/png', 'image/webp']
+WHERE NOT EXISTS (SELECT 1 FROM storage.buckets WHERE id = 'artifact-images');
+
+-- Allow public read access to the bucket (anyone can view images)
+INSERT INTO storage.policies (name, bucket_id, operation, definition, owner)
+SELECT 'Public Read', 'artifact-images', 'SELECT', 'true', NULL
+WHERE NOT EXISTS (SELECT 1 FROM storage.policies WHERE name = 'Public Read' AND bucket_id = 'artifact-images' AND operation = 'SELECT');
+
+-- Allow service_role to upload (admin uses supabaseAdmin)
+INSERT INTO storage.policies (name, bucket_id, operation, definition, owner)
+SELECT 'Admin Upload', 'artifact-images', 'INSERT', 'true', NULL
+WHERE NOT EXISTS (SELECT 1 FROM storage.policies WHERE name = 'Admin Upload' AND bucket_id = 'artifact-images' AND operation = 'INSERT');
