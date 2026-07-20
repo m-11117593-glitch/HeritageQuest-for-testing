@@ -10,8 +10,10 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AdminRouteRouteImport } from './routes/admin/route'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as ArtifactsCodeRouteImport } from './routes/artifacts.$code'
 import { Route as AuthenticatedScanRouteImport } from './routes/_authenticated/scan'
 import { Route as AuthenticatedRewardsRouteImport } from './routes/_authenticated/rewards'
@@ -32,6 +34,11 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminRouteRoute = AdminRouteRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
@@ -40,6 +47,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRouteRoute,
 } as any)
 const ArtifactsCodeRoute = ArtifactsCodeRouteImport.update({
   id: '/artifacts/$code',
@@ -117,6 +129,7 @@ const AuthenticatedArtifactIdRoute = AuthenticatedArtifactIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/achievements': typeof AuthenticatedAchievementsRoute
   '/friends': typeof AuthenticatedFriendsRoute
@@ -130,6 +143,7 @@ export interface FileRoutesByFullPath {
   '/rewards': typeof AuthenticatedRewardsRoute
   '/scan': typeof AuthenticatedScanRoute
   '/artifacts/$code': typeof ArtifactsCodeRoute
+  '/admin/': typeof AdminIndexRoute
   '/artifact/$id': typeof AuthenticatedArtifactIdRoute
   '/profile/$userId': typeof AuthenticatedProfileUserIdRoute
 }
@@ -148,6 +162,7 @@ export interface FileRoutesByTo {
   '/rewards': typeof AuthenticatedRewardsRoute
   '/scan': typeof AuthenticatedScanRoute
   '/artifacts/$code': typeof ArtifactsCodeRoute
+  '/admin': typeof AdminIndexRoute
   '/artifact/$id': typeof AuthenticatedArtifactIdRoute
   '/profile/$userId': typeof AuthenticatedProfileUserIdRoute
 }
@@ -155,6 +170,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/admin': typeof AdminRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/achievements': typeof AuthenticatedAchievementsRoute
   '/_authenticated/friends': typeof AuthenticatedFriendsRoute
@@ -168,6 +184,7 @@ export interface FileRoutesById {
   '/_authenticated/rewards': typeof AuthenticatedRewardsRoute
   '/_authenticated/scan': typeof AuthenticatedScanRoute
   '/artifacts/$code': typeof ArtifactsCodeRoute
+  '/admin/': typeof AdminIndexRoute
   '/_authenticated/artifact/$id': typeof AuthenticatedArtifactIdRoute
   '/_authenticated/profile/$userId': typeof AuthenticatedProfileUserIdRoute
 }
@@ -175,6 +192,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/auth'
     | '/achievements'
     | '/friends'
@@ -188,6 +206,7 @@ export interface FileRouteTypes {
     | '/rewards'
     | '/scan'
     | '/artifacts/$code'
+    | '/admin/'
     | '/artifact/$id'
     | '/profile/$userId'
   fileRoutesByTo: FileRoutesByTo
@@ -206,12 +225,14 @@ export interface FileRouteTypes {
     | '/rewards'
     | '/scan'
     | '/artifacts/$code'
+    | '/admin'
     | '/artifact/$id'
     | '/profile/$userId'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/admin'
     | '/auth'
     | '/_authenticated/achievements'
     | '/_authenticated/friends'
@@ -225,6 +246,7 @@ export interface FileRouteTypes {
     | '/_authenticated/rewards'
     | '/_authenticated/scan'
     | '/artifacts/$code'
+    | '/admin/'
     | '/_authenticated/artifact/$id'
     | '/_authenticated/profile/$userId'
   fileRoutesById: FileRoutesById
@@ -232,6 +254,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AdminRouteRoute: typeof AdminRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   ArtifactsCodeRoute: typeof ArtifactsCodeRoute
 }
@@ -243,6 +266,13 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -258,6 +288,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
     }
     '/artifacts/$code': {
       id: '/artifacts/$code'
@@ -404,9 +441,22 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
+interface AdminRouteRouteChildren {
+  AdminIndexRoute: typeof AdminIndexRoute
+}
+
+const AdminRouteRouteChildren: AdminRouteRouteChildren = {
+  AdminIndexRoute: AdminIndexRoute,
+}
+
+const AdminRouteRouteWithChildren = AdminRouteRoute._addFileChildren(
+  AdminRouteRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AdminRouteRoute: AdminRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   ArtifactsCodeRoute: ArtifactsCodeRoute,
 }

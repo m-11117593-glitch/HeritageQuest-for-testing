@@ -1,8 +1,8 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { AppShell } from "@/components/AppShell";
+import { AdminShell } from "@/components/AdminShell";
 
-export const Route = createFileRoute("/_authenticated")({
+export const Route = createFileRoute("/admin")({
   ssr: false,
   beforeLoad: async ({ location }) => {
     const { data, error } = await supabase.auth.getUser();
@@ -10,23 +10,21 @@ export const Route = createFileRoute("/_authenticated")({
       throw redirect({ to: "/auth", search: { redirect: location.href } });
     }
 
-    // Fetch the user's profile role
     const { data: profile } = await supabase
       .from("profiles")
       .select("role")
       .eq("id", data.user.id)
       .maybeSingle();
 
-    // If admin, redirect to admin panel instead of normal user pages
-    if (profile?.role === "admin") {
-      throw redirect({ to: "/admin" });
+    if (profile?.role !== "admin") {
+      throw redirect({ to: "/scan" });
     }
 
-    return { user: data.user, role: profile?.role ?? "user" };
+    return { user: data.user, role: "admin" };
   },
   component: () => (
-    <AppShell>
+    <AdminShell>
       <Outlet />
-    </AppShell>
+    </AdminShell>
   ),
 });
