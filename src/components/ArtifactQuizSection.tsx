@@ -56,6 +56,9 @@ export function ArtifactQuizSection({
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
+  // Level-up popup dismiss tracking
+  const [dismissedLevelUp, setDismissedLevelUp] = useState(false);
+
   // Animation states
   const [feedbackType, setFeedbackType] = useState<"correct" | "wrong" | null>(null);
   const [feedbackKey, setFeedbackKey] = useState(0);
@@ -413,10 +416,11 @@ export function ArtifactQuizSection({
         )}
 
         {/* Level-up popup */}
-        {finalCompletion.levelUps > 0 && (
+        {finalCompletion.levelUps > 0 && !dismissedLevelUp && (
           <LevelUpPopup
             level={finalCompletion.level}
             levelUps={finalCompletion.levelUps}
+            onClose={() => setDismissedLevelUp(true)}
           />
         )}
 

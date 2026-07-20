@@ -195,12 +195,20 @@ function ArtifactPage() {
 
 function RewardSummary({ result }: { result: ScanResult }) {
   const { t, lang } = useI18n();
+  const [showLevelUp, setShowLevelUp] = useState(true);
+
+  // Reset dismiss state when result changes (new scan)
+  useEffect(() => {
+    setShowLevelUp(true);
+  }, [result]);
+
   return (
     <>
-      {result.levelUps > 0 && (
+      {result.levelUps > 0 && showLevelUp && (
         <LevelUpPopup
           level={result.level}
           levelUps={result.levelUps}
+          onClose={() => setShowLevelUp(false)}
         />
       )}
       <div className="space-y-3 pop-in">
