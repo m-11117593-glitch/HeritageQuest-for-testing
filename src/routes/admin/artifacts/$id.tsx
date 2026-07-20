@@ -362,7 +362,7 @@ function EditArtifactPage() {
           Cancel
         </button>
         <Link
-          to="/admin/artifacts/$id/quizzes"
+          to="/admin/artifacts/quizzes/$id"
           params={{ id }}
           className="inline-flex items-center gap-2 rounded-xl border-2 border-border px-4 py-3 text-sm font-medium text-muted-foreground transition-colors hover:border-primary/30 hover:text-ink"
         >

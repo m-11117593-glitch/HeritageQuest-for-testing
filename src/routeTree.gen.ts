@@ -31,7 +31,7 @@ import { Route as AdminArtifactsNewRouteImport } from './routes/admin/artifacts/
 import { Route as AdminArtifactsIdRouteImport } from './routes/admin/artifacts/$id'
 import { Route as AuthenticatedProfileUserIdRouteImport } from './routes/_authenticated/profile.$userId'
 import { Route as AuthenticatedArtifactIdRouteImport } from './routes/_authenticated/artifact.$id'
-import { Route as AdminArtifactsIdQuizzesRouteImport } from './routes/admin/artifacts/$id/quizzes'
+import { Route as AdminArtifactsQuizzesIdRouteImport } from './routes/admin/artifacts/quizzes.$id'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -145,10 +145,10 @@ const AuthenticatedArtifactIdRoute = AuthenticatedArtifactIdRouteImport.update({
   path: '/artifact/$id',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AdminArtifactsIdQuizzesRoute = AdminArtifactsIdQuizzesRouteImport.update({
-  id: '/quizzes',
-  path: '/quizzes',
-  getParentRoute: () => AdminArtifactsIdRoute,
+const AdminArtifactsQuizzesIdRoute = AdminArtifactsQuizzesIdRouteImport.update({
+  id: '/artifacts/quizzes/$id',
+  path: '/artifacts/quizzes/$id',
+  getParentRoute: () => AdminRouteRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -170,10 +170,10 @@ export interface FileRoutesByFullPath {
   '/admin/': typeof AdminIndexRoute
   '/artifact/$id': typeof AuthenticatedArtifactIdRoute
   '/profile/$userId': typeof AuthenticatedProfileUserIdRoute
-  '/admin/artifacts/$id': typeof AdminArtifactsIdRouteWithChildren
+  '/admin/artifacts/$id': typeof AdminArtifactsIdRoute
   '/admin/artifacts/new': typeof AdminArtifactsNewRoute
   '/admin/artifacts/': typeof AdminArtifactsIndexRoute
-  '/admin/artifacts/$id/quizzes': typeof AdminArtifactsIdQuizzesRoute
+  '/admin/artifacts/quizzes/$id': typeof AdminArtifactsQuizzesIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -193,10 +193,10 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminIndexRoute
   '/artifact/$id': typeof AuthenticatedArtifactIdRoute
   '/profile/$userId': typeof AuthenticatedProfileUserIdRoute
-  '/admin/artifacts/$id': typeof AdminArtifactsIdRouteWithChildren
+  '/admin/artifacts/$id': typeof AdminArtifactsIdRoute
   '/admin/artifacts/new': typeof AdminArtifactsNewRoute
   '/admin/artifacts': typeof AdminArtifactsIndexRoute
-  '/admin/artifacts/$id/quizzes': typeof AdminArtifactsIdQuizzesRoute
+  '/admin/artifacts/quizzes/$id': typeof AdminArtifactsQuizzesIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -219,10 +219,10 @@ export interface FileRoutesById {
   '/admin/': typeof AdminIndexRoute
   '/_authenticated/artifact/$id': typeof AuthenticatedArtifactIdRoute
   '/_authenticated/profile/$userId': typeof AuthenticatedProfileUserIdRoute
-  '/admin/artifacts/$id': typeof AdminArtifactsIdRouteWithChildren
+  '/admin/artifacts/$id': typeof AdminArtifactsIdRoute
   '/admin/artifacts/new': typeof AdminArtifactsNewRoute
   '/admin/artifacts/': typeof AdminArtifactsIndexRoute
-  '/admin/artifacts/$id/quizzes': typeof AdminArtifactsIdQuizzesRoute
+  '/admin/artifacts/quizzes/$id': typeof AdminArtifactsQuizzesIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -248,7 +248,7 @@ export interface FileRouteTypes {
     | '/admin/artifacts/$id'
     | '/admin/artifacts/new'
     | '/admin/artifacts/'
-    | '/admin/artifacts/$id/quizzes'
+    | '/admin/artifacts/quizzes/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -271,7 +271,7 @@ export interface FileRouteTypes {
     | '/admin/artifacts/$id'
     | '/admin/artifacts/new'
     | '/admin/artifacts'
-    | '/admin/artifacts/$id/quizzes'
+    | '/admin/artifacts/quizzes/$id'
   id:
     | '__root__'
     | '/'
@@ -296,7 +296,7 @@ export interface FileRouteTypes {
     | '/admin/artifacts/$id'
     | '/admin/artifacts/new'
     | '/admin/artifacts/'
-    | '/admin/artifacts/$id/quizzes'
+    | '/admin/artifacts/quizzes/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -463,12 +463,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedArtifactIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/admin/artifacts/$id/quizzes': {
-      id: '/admin/artifacts/$id/quizzes'
-      path: '/quizzes'
-      fullPath: '/admin/artifacts/$id/quizzes'
-      preLoaderRoute: typeof AdminArtifactsIdQuizzesRouteImport
-      parentRoute: typeof AdminArtifactsIdRoute
+    '/admin/artifacts/quizzes/$id': {
+      id: '/admin/artifacts/quizzes/$id'
+      path: '/artifacts/quizzes/$id'
+      fullPath: '/admin/artifacts/quizzes/$id'
+      preLoaderRoute: typeof AdminArtifactsQuizzesIdRouteImport
+      parentRoute: typeof AdminRouteRoute
     }
   }
 }
@@ -517,29 +517,20 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
-interface AdminArtifactsIdRouteChildren {
-  AdminArtifactsIdQuizzesRoute: typeof AdminArtifactsIdQuizzesRoute
-}
-
-const AdminArtifactsIdRouteChildren: AdminArtifactsIdRouteChildren = {
-  AdminArtifactsIdQuizzesRoute: AdminArtifactsIdQuizzesRoute,
-}
-
-const AdminArtifactsIdRouteWithChildren =
-  AdminArtifactsIdRoute._addFileChildren(AdminArtifactsIdRouteChildren)
-
 interface AdminRouteRouteChildren {
   AdminIndexRoute: typeof AdminIndexRoute
-  AdminArtifactsIdRoute: typeof AdminArtifactsIdRouteWithChildren
+  AdminArtifactsIdRoute: typeof AdminArtifactsIdRoute
   AdminArtifactsNewRoute: typeof AdminArtifactsNewRoute
   AdminArtifactsIndexRoute: typeof AdminArtifactsIndexRoute
+  AdminArtifactsQuizzesIdRoute: typeof AdminArtifactsQuizzesIdRoute
 }
 
 const AdminRouteRouteChildren: AdminRouteRouteChildren = {
   AdminIndexRoute: AdminIndexRoute,
-  AdminArtifactsIdRoute: AdminArtifactsIdRouteWithChildren,
+  AdminArtifactsIdRoute: AdminArtifactsIdRoute,
   AdminArtifactsNewRoute: AdminArtifactsNewRoute,
   AdminArtifactsIndexRoute: AdminArtifactsIndexRoute,
+  AdminArtifactsQuizzesIdRoute: AdminArtifactsQuizzesIdRoute,
 }
 
 const AdminRouteRouteWithChildren = AdminRouteRoute._addFileChildren(

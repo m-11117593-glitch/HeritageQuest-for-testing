@@ -2,11 +2,11 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
-import { ArrowLeft, Plus, Save, Trash2, Loader2, HelpCircle, GripVertical } from "lucide-react";
+import { ArrowLeft, Plus, Save, Trash2, Loader2, HelpCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getQuizQuestions, saveQuizQuestion, deleteQuizQuestion } from "@/lib/admin.functions";
 
-export const Route = createFileRoute("/admin/artifacts/$id/quizzes")({
+export const Route = createFileRoute("/admin/artifacts/quizzes/$id")({
   component: QuizManagerPage,
 });
 
