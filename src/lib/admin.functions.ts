@@ -267,6 +267,193 @@ export const deleteQuizQuestion = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+// ── Translate Text (EN → BM) via MyMemory API ──
+
+export const translateText = createServerFn({ method: "GET" })
+  .inputValidator((d) => z.object({ text: z.string().min(1) }).parse(d))
+  .handler(async ({ data }) => {
+    const encoded = encodeURIComponent(data.text);
+    // MyMemory anonymous: 5000 chars/day. Supports Malay (ms).
+    const url = `https://api.mymemory.translated.net/get?q=${encoded}&langpair=en|ms`;
+
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Translation failed: ${response.status}`);
+    }
+
+    const result = await response.json();
+    if (!result.responseData?.translatedText) {
+      throw new Error("Translation returned empty result");
+    }
+
+    return { ok: true, translatedText: result.responseData.translatedText };
+  });
+
+// ── Category CRUD ──
+
+export const getCategories = createServerFn({ method: "GET" })
+  .handler(async () => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const sa: any = supabaseAdmin;
+
+    const { data, error } = await sa
+      .from("categories")
+      .select("*")
+      .order("sort_order", { ascending: true });
+
+    if (error) throw new Error(`Failed to fetch categories: ${error.message}`);
+    return { ok: true, categories: data ?? [] };
+  });
+
+export const getCategoriesWithCounts = createServerFn({ method: "GET" })
+  .handler(async () => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const sa: any = supabaseAdmin;
+
+    const { data: categories, error: catErr } = await sa
+      .from("categories")
+      .select("*")
+      .order("sort_order", { ascending: true });
+
+    if (catErr) throw new Error(`Failed to fetch categories: ${catErr.message}`);
+
+    const { data: counts, error: countErr } = await sa
+      .from("artifacts")
+      .select("category");
+
+    if (countErr) throw new Error(`Failed to fetch counts: ${countErr.message}`);
+
+    const countMap: Record<string, number> = {};
+    for (const a of counts ?? []) {
+      countMap[a.category] = (countMap[a.category] ?? 0) + 1;
+    }
+
+    const result = (categories ?? []).map((c: any) => ({
+      ...c,
+      artifactCount: countMap[c.id] ?? 0,
+    }));
+
+    return { ok: true, categories: result };
+  });
+
+const createCategoryInput = z.object({
+  id: z.string().min(1).regex(/^[a-z0-9-]+$/, "ID must be kebab-case"),
+  name_bm: z.string().min(1),
+  name_en: z.string().min(1),
+  icon: z.string().min(1),
+  sort_order: z.number().int().optional(),
+});
+
+export const createCategory = createServerFn({ method: "POST" })
+  .inputValidator((d) => createCategoryInput.parse(d))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const sa: any = supabaseAdmin;
+
+    const { error } = await sa.from("categories").insert({
+      id: data.id,
+      name_bm: data.name_bm,
+      name_en: data.name_en,
+      icon: data.icon,
+      sort_order: data.sort_order ?? 99,
+    });
+
+    if (error) throw new Error(`Failed to create category: ${error.message}`);
+    return { ok: true, id: data.id };
+  });
+
+const updateCategoryInput = z.object({
+  id: z.string().min(1),
+  name_bm: z.string().min(1),
+  name_en: z.string().min(1),
+  icon: z.string().min(1),
+  sort_order: z.number().int(),
+});
+
+export const updateCategory = createServerFn({ method: "POST" })
+  .inputValidator((d) => updateCategoryInput.parse(d))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const sa: any = supabaseAdmin;
+
+    const { error } = await sa
+      .from("categories")
+      .update({
+        name_bm: data.name_bm,
+        name_en: data.name_en,
+        icon: data.icon,
+        sort_order: data.sort_order,
+      })
+      .eq("id", data.id);
+
+    if (error) throw new Error(`Failed to update category: ${error.message}`);
+    return { ok: true, id: data.id };
+  });
+
+const deleteCategoryInput = z.object({ id: z.string().min(1) });
+
+export const deleteCategory = createServerFn({ method: "POST" })
+  .inputValidator((d) => deleteCategoryInput.parse(d))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const sa: any = supabaseAdmin;
+
+    // Check if any artifacts use this category
+    const { count } = await sa
+      .from("artifacts")
+      .select("*", { count: "exact", head: true })
+      .eq("category", data.id);
+
+    if (count && count > 0) {
+      throw new Error(`Cannot delete category: ${count} artifact(s) still use it. Reassign them first.`);
+    }
+
+    const { error } = await sa.from("categories").delete().eq("id", data.id);
+    if (error) throw new Error(`Failed to delete category: ${error.message}`);
+    return { ok: true };
+  });
+
+// ── Bulk update artifacts ──
+
+const bulkUpdateArtifactsInput = z.object({
+  ids: z.array(z.string()).min(1),
+  category: z.string().optional(),
+});
+
+export const bulkUpdateArtifacts = createServerFn({ method: "POST" })
+  .inputValidator((d) => bulkUpdateArtifactsInput.parse(d))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const sa: any = supabaseAdmin;
+
+    const updateData: Record<string, any> = {};
+    if (data.category) updateData.category = data.category;
+
+    const { error } = await sa
+      .from("artifacts")
+      .update(updateData)
+      .in("id", data.ids);
+
+    if (error) throw new Error(`Bulk update failed: ${error.message}`);
+    return { ok: true, count: data.ids.length };
+  });
+
+// ── Export artifacts as JSON ──
+
+export const exportArtifactsAsJson = createServerFn({ method: "GET" })
+  .handler(async () => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const sa: any = supabaseAdmin;
+
+    const { data, error } = await sa
+      .from("artifacts")
+      .select("*")
+      .order("sort_order", { ascending: true });
+
+    if (error) throw new Error(`Export failed: ${error.message}`);
+    return { ok: true, data: data ?? [] };
+  });
+
 export const getQuizQuestions = createServerFn({ method: "GET" })
   .inputValidator((d) => z.object({ artifactId: z.string().min(1) }).parse(d))
   .handler(async ({ data }) => {

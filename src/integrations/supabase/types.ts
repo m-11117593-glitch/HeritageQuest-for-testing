@@ -163,6 +163,30 @@ export type Database = {
         }
         Relationships: []
       }
+      categories: {
+        Row: {
+          id: string
+          name_bm: string
+          name_en: string
+          icon: string
+          sort_order: number
+        }
+        Insert: {
+          id: string
+          name_bm: string
+          name_en: string
+          icon?: string
+          sort_order?: number
+        }
+        Update: {
+          id?: string
+          name_bm?: string
+          name_en?: string
+          icon?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
       badges: {
         Row: {
           description_bm: string

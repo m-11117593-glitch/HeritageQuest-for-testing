@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useI18n } from "@/lib/i18n";
 import {
   Package,
   FolderKanban,
@@ -33,6 +34,7 @@ async function fetchStats() {
 }
 
 function AdminDashboard() {
+  const { t } = useI18n();
   const { data: stats, isLoading } = useQuery({
     queryKey: ["admin-stats"],
     queryFn: fetchStats,
@@ -42,9 +44,9 @@ function AdminDashboard() {
     <div className="space-y-8">
       {/* Header */}
       <div>
-        <h1 className="font-display text-2xl font-semibold text-ink">Dashboard</h1>
+        <h1 className="font-display text-2xl font-semibold text-ink">{t("admin_dashboard")}</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Welcome to the HeritageQuest admin panel. Manage artifacts, quizzes, and categories.
+          {t("admin_welcome")}
         </p>
       </div>
 
@@ -59,19 +61,19 @@ function AdminDashboard() {
         <div className="grid gap-4 sm:grid-cols-3">
           <StatCard
             icon={Package}
-            label="Total Artifacts"
+            label={t("admin_total_artifacts")}
             value={stats?.artifactCount ?? 0}
             color="bg-primary/10 text-primary"
           />
           <StatCard
             icon={FolderKanban}
-            label="Categories"
+            label={t("admin_categories")}
             value={stats?.categoryCount ?? 0}
             color="bg-indigo/10 text-indigo"
           />
           <StatCard
             icon={FileQuestion}
-            label="Quiz Questions"
+            label={t("admin_quiz_questions")}
             value={stats?.quizCount ?? 0}
             color="bg-jungle/10 text-jungle"
           />
@@ -80,7 +82,7 @@ function AdminDashboard() {
 
       {/* Quick actions */}
       <section>
-        <h2 className="mb-4 font-display text-lg font-semibold text-ink">Quick Actions</h2>
+        <h2 className="mb-4 font-display text-lg font-semibold text-ink">{t("admin_quick_actions")}</h2>
         <div className="grid gap-4 sm:grid-cols-2">
           <Link
             to="/admin/artifacts/new"
@@ -90,8 +92,8 @@ function AdminDashboard() {
               <PlusCircle className="size-6" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="font-display font-semibold text-ink">Add New Artifact</p>
-              <p className="text-xs text-muted-foreground">Create a new museum artifact with images</p>
+              <p className="font-display font-semibold text-ink">{t("admin_add_new_artifact")}</p>
+              <p className="text-xs text-muted-foreground">{t("admin_add_new_desc")}</p>
             </div>
             <ArrowRight className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
           </Link>
@@ -103,8 +105,8 @@ function AdminDashboard() {
               <Package className="size-6" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="font-display font-semibold text-ink">Manage Artifacts</p>
-              <p className="text-xs text-muted-foreground">View, edit, and manage the artifact collection</p>
+              <p className="font-display font-semibold text-ink">{t("admin_manage_artifacts")}</p>
+              <p className="text-xs text-muted-foreground">{t("admin_manage_desc")}</p>
             </div>
             <ArrowRight className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
           </Link>
@@ -112,7 +114,7 @@ function AdminDashboard() {
       </section>
 
       {/* Recent artifacts */}
-      <RecentArtifacts />
+      <RecentArtifactsWithI18n />
     </div>
   );
 }
@@ -143,13 +145,14 @@ function StatCard({
   );
 }
 
-function RecentArtifacts() {
+function RecentArtifactsWithI18n() {
+  const { t, lang } = useI18n();
   const { data: artifacts } = useQuery({
     queryKey: ["admin-recent-artifacts"],
     queryFn: async () => {
       const { data } = await supabase
         .from("artifacts")
-        .select("id, name_en, category")
+        .select("id, name_en, name_bm, category")
         .order("sort_order", { ascending: true })
         .limit(5);
       return data ?? [];
@@ -168,7 +171,7 @@ function RecentArtifacts() {
 
   return (
     <section>
-      <h2 className="mb-4 font-display text-lg font-semibold text-ink">Recent Artifacts</h2>
+      <h2 className="mb-4 font-display text-lg font-semibold text-ink">{t("admin_recent")}</h2>
       <div className="space-y-2">
         {artifacts.map((a) => (
           <div
@@ -179,7 +182,7 @@ function RecentArtifacts() {
               {categoryEmoji[a.category] ?? "📦"}
             </span>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium text-ink truncate">{a.name_en}</p>
+              <p className="text-sm font-medium text-ink truncate">{lang === "bm" ? a.name_bm : a.name_en}</p>
               <p className="text-[11px] capitalize text-muted-foreground">{a.category}</p>
             </div>
           </div>

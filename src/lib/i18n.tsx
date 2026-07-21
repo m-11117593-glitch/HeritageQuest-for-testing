@@ -222,6 +222,43 @@ const STRINGS = {
   // Public profile
   public_profile_title: { bm: "Profil", en: "Profile" },
   public_profile_friends: { bm: "Rakan", en: "Friends" },
+  // Admin panel — sidebar
+  admin_panel: { bm: "Panel Admin", en: "Admin Panel" },
+  // Admin panel — dashboard
+  admin_dashboard: { bm: "Papan Pemuka", en: "Dashboard" },
+  admin_welcome: { bm: "Selamat datang ke panel pentadbiran HeritageQuest. Urus artifak, kuiz, dan kategori.", en: "Welcome to the HeritageQuest admin panel. Manage artifacts, quizzes, and categories." },
+  admin_total_artifacts: { bm: "Jumlah Artifak", en: "Total Artifacts" },
+  admin_categories: { bm: "Kategori", en: "Categories" },
+  admin_quiz_questions: { bm: "Soalan Kuiz", en: "Quiz Questions" },
+  admin_quick_actions: { bm: "Tindakan Pantas", en: "Quick Actions" },
+  admin_add_new_artifact: { bm: "Tambah Artifak Baru", en: "Add New Artifact" },
+  admin_add_new_desc: { bm: "Cipta artifak muzium baharu dengan gambar", en: "Create a new museum artifact with images" },
+  admin_manage_artifacts: { bm: "Urus Artifak", en: "Manage Artifacts" },
+  admin_manage_desc: { bm: "Lihat, sunting, dan urus koleksi artifak", en: "View, edit, and manage the artifact collection" },
+  admin_recent: { bm: "Artifak Terkini", en: "Recent Artifacts" },
+  // Admin panel — artifacts list
+  admin_artifacts: { bm: "Artifak", en: "Artifacts" },
+  admin_artifacts_count: { bm: "artifak dalam koleksi", en: "artifacts in the collection" },
+  admin_add_new_short: { bm: "Tambah Baru", en: "Add New" },
+  admin_no_artifacts: { bm: "Belum Ada Artifak", en: "No artifacts yet" },
+  admin_no_artifacts_desc: { bm: "Cipta artifak pertama anda untuk memulakan.", en: "Create your first artifact to get started." },
+  admin_add_artifact: { bm: "Tambah Artifak", en: "Add Artifact" },
+  // Admin panel — artifacts list extras
+  admin_export: { bm: "Eksport", en: "Export" },
+  admin_search_placeholder: { bm: "Cari artifak...", en: "Search artifacts..." },
+  admin_selected_count: { bm: "artifak dipilih", en: "selected" },
+  admin_change_category: { bm: "Tukar Kategori", en: "Change Category" },
+  admin_clear_selection: { bm: "Batal", en: "Clear" },
+  admin_select_all: { bm: "Pilih Semua", en: "Select All" },
+  admin_deselect_all: { bm: "Nyahpilih Semua", en: "Deselect All" },
+  admin_no_search_results: { bm: "Tiada Hasil Carian", en: "No Results" },
+  admin_no_search_results_desc: { bm: "Cuba kata kunci lain.", en: "Try a different search term." },
+  admin_change_category_for: { bm: "Tukar kategori untuk", en: "Change category for" },
+  admin_artifacts_lc: { bm: "artifak:", en: "artifacts:" },
+  admin_select_category: { bm: "Pilih kategori...", en: "Select category..." },
+  admin_cancel: { bm: "Batal", en: "Cancel" },
+  admin_change: { bm: "Tukar", en: "Change" },
+  admin_saving: { bm: "Menyimpan...", en: "Saving..." },
 } as const;
 
 export type StringKey = keyof typeof STRINGS;

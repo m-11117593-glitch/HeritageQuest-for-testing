@@ -2,35 +2,44 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState, useRef } from "react";
-import { ArrowLeft, Upload, Save, Loader2, Trash2, AlertTriangle, HelpCircle } from "lucide-react";
+import { ArrowLeft, Upload, Save, Loader2, Trash2, AlertTriangle, HelpCircle, Languages, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { updateArtifact, uploadArtifactImage, deleteArtifact } from "@/lib/admin.functions";
+import { useI18n } from "@/lib/i18n";
+import { updateArtifact, uploadArtifactImage, deleteArtifact, translateText } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/admin/artifacts/$id")({
   component: EditArtifactPage,
 });
 
-const CATEGORIES = [
-  { value: "weapons", label: "Weapons" },
-  { value: "regalia", label: "Regalia" },
-  { value: "music", label: "Music" },
-  { value: "crafts", label: "Crafts" },
-  { value: "toys", label: "Toys" },
-];
-
 function EditArtifactPage() {
   const { id } = Route.useParams();
+  const { lang } = useI18n();
   const nav = useNavigate();
   const updateFn = useServerFn(updateArtifact);
   const uploadFn = useServerFn(uploadArtifactImage);
 
   const deleteFn = useServerFn(deleteArtifact);
+  const translateFn = useServerFn(translateText);
+
+  // Fetch categories dynamically from DB
+  const { data: catsData } = useQuery({
+    queryKey: ["admin-categories-form"],
+    queryFn: async () => {
+      const { data } = await supabase.from("categories").select("*").order("sort_order", { ascending: true });
+      return data ?? [];
+    },
+  });
+  const categories = catsData ?? [];
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [showLanguages, setShowLanguages] = useState(false);
+  const [translating, setTranslating] = useState(false);
+  const [translationError, setTranslationError] = useState<string | null>(null);
+  const [translationDone, setTranslationDone] = useState(false);
 
   // Form fields
   const [nameBm, setNameBm] = useState("");
@@ -122,6 +131,34 @@ function EditArtifactPage() {
     });
   }
 
+  async function handleTranslateAll() {
+    if (translating) return;
+    setTranslating(true);
+    setTranslationError(null);
+    setTranslationDone(false);
+    try {
+      const pairs: [string, (v: string) => void][] = [
+        [nameEn, setNameBm],
+        [eraEn, setEraBm],
+        [originEn, setOriginBm],
+        [materialEn, setMaterialBm],
+        [descEn, setDescBm],
+      ];
+
+      for (const [enText, setter] of pairs) {
+        if (!enText.trim()) continue;
+        const result = await translateFn({ data: { text: enText } });
+        setter(result.translatedText);
+      }
+      setTranslationDone(true);
+      setTimeout(() => setTranslationDone(false), 2500);
+    } catch (err) {
+      setTranslationError(err instanceof Error ? err.message : "Translation failed");
+    } finally {
+      setTranslating(false);
+    }
+  }
+
   async function handleDelete() {
     if (deleting) return;
     setDeleting(true);
@@ -142,6 +179,13 @@ function EditArtifactPage() {
     setSaving(true);
     setError(null);
     setSuccess(false);
+
+    // Validate BM fields are filled (required but hidden in main form)
+    if (!nameBm.trim() || !eraBm.trim() || !originBm.trim() || !materialBm.trim() || !descBm.trim()) {
+      setError('Please fill in BM fields via the Languages button before saving.');
+      setSaving(false);
+      return;
+    }
 
     try {
       // Upload any new images
@@ -233,72 +277,43 @@ function EditArtifactPage() {
       )}
 
       <div className="space-y-6 rounded-xl border-2 border-border bg-card p-6">
-        {/* Name */}
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">Name (BM)</label>
-            <input value={nameBm} onChange={(e) => setNameBm(e.target.value)} className="w-full rounded-xl border-2 border-border bg-background px-4 py-2.5 text-sm outline-none focus:border-primary/50" required />
-          </div>
-          <div>
-            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">Name (EN)</label>
-            <input value={nameEn} onChange={(e) => setNameEn(e.target.value)} className="w-full rounded-xl border-2 border-border bg-background px-4 py-2.5 text-sm outline-none focus:border-primary/50" required />
-          </div>
+        {/* Name — EN only in main form */}
+        <div>
+          <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">Name (EN)</label>
+          <input value={nameEn} onChange={(e) => setNameEn(e.target.value)} className="w-full rounded-xl border-2 border-border bg-background px-4 py-2.5 text-sm outline-none focus:border-primary/50" required />
         </div>
 
         {/* Category */}
         <div>
           <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">Category</label>
           <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full rounded-xl border-2 border-border bg-background px-4 py-2.5 text-sm outline-none focus:border-primary/50">
-            {CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+            {categories.length === 0 && <option value="">Loading...</option>}
+            {categories.map((c: any) => <option key={c.id} value={c.id}>{c.icon} {lang === "bm" ? c.name_bm : c.name_en}</option>)}
           </select>
         </div>
 
-        {/* Era */}
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">Era (BM)</label>
-            <input value={eraBm} onChange={(e) => setEraBm(e.target.value)} className="w-full rounded-xl border-2 border-border bg-background px-4 py-2.5 text-sm outline-none focus:border-primary/50" required />
-          </div>
-          <div>
-            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">Era (EN)</label>
-            <input value={eraEn} onChange={(e) => setEraEn(e.target.value)} className="w-full rounded-xl border-2 border-border bg-background px-4 py-2.5 text-sm outline-none focus:border-primary/50" required />
-          </div>
+        {/* Era — EN only */}
+        <div>
+          <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">Era (EN)</label>
+          <input value={eraEn} onChange={(e) => setEraEn(e.target.value)} className="w-full rounded-xl border-2 border-border bg-background px-4 py-2.5 text-sm outline-none focus:border-primary/50" required />
         </div>
 
-        {/* Origin */}
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">Origin (BM)</label>
-            <input value={originBm} onChange={(e) => setOriginBm(e.target.value)} className="w-full rounded-xl border-2 border-border bg-background px-4 py-2.5 text-sm outline-none focus:border-primary/50" required />
-          </div>
-          <div>
-            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">Origin (EN)</label>
-            <input value={originEn} onChange={(e) => setOriginEn(e.target.value)} className="w-full rounded-xl border-2 border-border bg-background px-4 py-2.5 text-sm outline-none focus:border-primary/50" required />
-          </div>
+        {/* Origin — EN only */}
+        <div>
+          <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">Origin (EN)</label>
+          <input value={originEn} onChange={(e) => setOriginEn(e.target.value)} className="w-full rounded-xl border-2 border-border bg-background px-4 py-2.5 text-sm outline-none focus:border-primary/50" required />
         </div>
 
-        {/* Material */}
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">Material (BM)</label>
-            <input value={materialBm} onChange={(e) => setMaterialBm(e.target.value)} className="w-full rounded-xl border-2 border-border bg-background px-4 py-2.5 text-sm outline-none focus:border-primary/50" required />
-          </div>
-          <div>
-            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">Material (EN)</label>
-            <input value={materialEn} onChange={(e) => setMaterialEn(e.target.value)} className="w-full rounded-xl border-2 border-border bg-background px-4 py-2.5 text-sm outline-none focus:border-primary/50" required />
-          </div>
+        {/* Material — EN only */}
+        <div>
+          <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">Material (EN)</label>
+          <input value={materialEn} onChange={(e) => setMaterialEn(e.target.value)} className="w-full rounded-xl border-2 border-border bg-background px-4 py-2.5 text-sm outline-none focus:border-primary/50" required />
         </div>
 
-        {/* Description */}
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">Description (BM)</label>
-            <textarea value={descBm} onChange={(e) => setDescBm(e.target.value)} rows={4} className="w-full rounded-xl border-2 border-border bg-background px-4 py-2.5 text-sm outline-none focus:border-primary/50 resize-y" required />
-          </div>
-          <div>
-            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">Description (EN)</label>
-            <textarea value={descEn} onChange={(e) => setDescEn(e.target.value)} rows={4} className="w-full rounded-xl border-2 border-border bg-background px-4 py-2.5 text-sm outline-none focus:border-primary/50 resize-y" required />
-          </div>
+        {/* Description — EN only */}
+        <div>
+          <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">Description (EN)</label>
+          <textarea value={descEn} onChange={(e) => setDescEn(e.target.value)} rows={4} className="w-full rounded-xl border-2 border-border bg-background px-4 py-2.5 text-sm outline-none focus:border-primary/50 resize-y" required />
         </div>
       </div>
 
@@ -361,6 +376,14 @@ function EditArtifactPage() {
         <button type="button" onClick={() => nav({ to: "/admin/artifacts" })} className="rounded-xl border-2 border-border px-6 py-3 text-sm font-medium text-muted-foreground transition-colors hover:text-ink">
           Cancel
         </button>
+        <button
+          type="button"
+          onClick={() => setShowLanguages(true)}
+          className="inline-flex items-center gap-2 rounded-xl border-2 border-border px-4 py-3 text-sm font-medium text-muted-foreground transition-colors hover:border-primary/30 hover:text-ink"
+        >
+          <Languages className="size-4" />
+          Languages
+        </button>
         <Link
           to="/admin/artifacts/quizzes/$id"
           params={{ id }}
@@ -379,6 +402,133 @@ function EditArtifactPage() {
           Delete
         </button>
       </div>
+
+      {/* Languages modal */}
+      {showLanguages && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowLanguages(false)} />
+          <div className="relative w-full max-w-2xl rounded-2xl border-2 border-border bg-card p-6 shadow-xl animate-in zoom-in-95 fade-in duration-200 max-h-[90vh] overflow-y-auto">
+            <div className="mb-6 flex items-start justify-between">
+              <div>
+                <h3 className="font-display text-lg font-semibold text-ink flex items-center gap-2">
+                  <Languages className="size-5" />
+                  Bilingual Content
+                </h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  View and edit both Bahasa Melayu and English side by side.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowLanguages(false)}
+                className="grid size-8 place-items-center rounded-lg border-2 border-border text-muted-foreground hover:text-ink transition-colors"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+
+            {/* Auto-translate button + status */}
+            <div className="mb-6 rounded-xl border-2 border-primary/20 bg-primary/5 px-4 py-3">
+              <div className="flex items-center gap-3">
+                <p className="flex-1 text-sm text-muted-foreground">
+                  Fill in EN fields above and click to auto-translate to BM.
+                </p>
+                <button
+                  type="button"
+                  onClick={handleTranslateAll}
+                  disabled={translating}
+                  className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-all hover:bg-primary/90 active:scale-95 disabled:opacity-60"
+                >
+                  {translating ? <Loader2 className="size-3.5 animate-spin" /> : <Languages className="size-3.5" />}
+                  {translating ? "Translating..." : "Auto-translate to BM"}
+                </button>
+              </div>
+              {translationDone && (
+                <p className="mt-2 text-xs font-medium text-jungle animate-in slide-in-from-top-1 fade-in duration-200">
+                  ✓ BM fields translated successfully!
+                </p>
+              )}
+              {translationError && (
+                <p className="mt-2 text-xs font-medium text-destructive animate-in slide-in-from-top-1 fade-in duration-200">
+                  ⚠ {translationError}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-5">
+              {/* Name */}
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-indigo">BM</label>
+                  <input value={nameBm} onChange={(e) => setNameBm(e.target.value)} className="w-full rounded-xl border-2 border-border bg-background px-4 py-2.5 text-sm outline-none focus:border-primary/50" />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-jungle">EN</label>
+                  <input value={nameEn} onChange={(e) => setNameEn(e.target.value)} className="w-full rounded-xl border-2 border-border bg-background px-4 py-2.5 text-sm outline-none focus:border-primary/50" />
+                </div>
+              </div>
+
+              {/* Era */}
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-indigo">Era (BM)</label>
+                  <input value={eraBm} onChange={(e) => setEraBm(e.target.value)} className="w-full rounded-xl border-2 border-border bg-background px-4 py-2.5 text-sm outline-none focus:border-primary/50" />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-jungle">Era (EN)</label>
+                  <input value={eraEn} onChange={(e) => setEraEn(e.target.value)} className="w-full rounded-xl border-2 border-border bg-background px-4 py-2.5 text-sm outline-none focus:border-primary/50" />
+                </div>
+              </div>
+
+              {/* Origin */}
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-indigo">Origin (BM)</label>
+                  <input value={originBm} onChange={(e) => setOriginBm(e.target.value)} className="w-full rounded-xl border-2 border-border bg-background px-4 py-2.5 text-sm outline-none focus:border-primary/50" />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-jungle">Origin (EN)</label>
+                  <input value={originEn} onChange={(e) => setOriginEn(e.target.value)} className="w-full rounded-xl border-2 border-border bg-background px-4 py-2.5 text-sm outline-none focus:border-primary/50" />
+                </div>
+              </div>
+
+              {/* Material */}
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-indigo">Material (BM)</label>
+                  <input value={materialBm} onChange={(e) => setMaterialBm(e.target.value)} className="w-full rounded-xl border-2 border-border bg-background px-4 py-2.5 text-sm outline-none focus:border-primary/50" />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-jungle">Material (EN)</label>
+                  <input value={materialEn} onChange={(e) => setMaterialEn(e.target.value)} className="w-full rounded-xl border-2 border-border bg-background px-4 py-2.5 text-sm outline-none focus:border-primary/50" />
+                </div>
+              </div>
+
+              {/* Description */}
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-indigo">Description (BM)</label>
+                  <textarea value={descBm} onChange={(e) => setDescBm(e.target.value)} rows={4} className="w-full rounded-xl border-2 border-border bg-background px-4 py-2.5 text-sm outline-none focus:border-primary/50 resize-y" />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-jungle">Description (EN)</label>
+                  <textarea value={descEn} onChange={(e) => setDescEn(e.target.value)} rows={4} className="w-full rounded-xl border-2 border-border bg-background px-4 py-2.5 text-sm outline-none focus:border-primary/50 resize-y" />
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6 flex items-center justify-end gap-3 border-t border-border pt-4">
+              <button
+                type="button"
+                onClick={() => setShowLanguages(false)}
+                className="rounded-xl border-2 border-border px-5 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:text-ink"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Delete confirmation modal */}
       {showDeleteConfirm && (
