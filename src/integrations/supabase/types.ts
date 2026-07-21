@@ -53,6 +53,56 @@ export type Database = {
         }
         Relationships: []
       }
+      artifact_quiz_questions: {
+        Row: {
+          id: string
+          artifact_id: string
+          prompt_bm: string
+          prompt_en: string
+          options_bm: Json
+          options_en: Json
+          correct_index: number
+          difficulty: number
+          sort_order: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          artifact_id: string
+          prompt_bm: string
+          prompt_en: string
+          options_bm: Json
+          options_en: Json
+          correct_index: number
+          difficulty?: number
+          sort_order?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          artifact_id?: string
+          prompt_bm?: string
+          prompt_en?: string
+          options_bm?: Json
+          options_en?: Json
+          correct_index?: number
+          difficulty?: number
+          sort_order?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "artifact_quiz_questions_artifact_id_fkey"
+            columns: ["artifact_id"]
+            isOneToOne: false
+            referencedRelation: "artifacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       artifacts: {
         Row: {
           category: string
@@ -63,6 +113,8 @@ export type Database = {
           icon: string
           id: string
           image_url: string | null
+          image_url_2: string | null
+          image_url_3: string | null
           material_bm: string
           material_en: string
           name_bm: string
@@ -80,6 +132,8 @@ export type Database = {
           icon?: string
           id: string
           image_url?: string | null
+          image_url_2?: string | null
+          image_url_3?: string | null
           material_bm: string
           material_en: string
           name_bm: string
@@ -97,12 +151,38 @@ export type Database = {
           icon?: string
           id?: string
           image_url?: string | null
+          image_url_2?: string | null
+          image_url_3?: string | null
           material_bm?: string
           material_en?: string
           name_bm?: string
           name_en?: string
           origin_bm?: string
           origin_en?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      categories: {
+        Row: {
+          id: string
+          name_bm: string
+          name_en: string
+          icon: string
+          sort_order: number
+        }
+        Insert: {
+          id: string
+          name_bm: string
+          name_en: string
+          icon?: string
+          sort_order?: number
+        }
+        Update: {
+          id?: string
+          name_bm?: string
+          name_en?: string
+          icon?: string
           sort_order?: number
         }
         Relationships: []
@@ -145,18 +225,21 @@ export type Database = {
           created_at: string
           id: string
           language_pref: string
+          role: string
           username: string
         }
         Insert: {
           created_at?: string
           id: string
           language_pref?: string
+          role?: string
           username: string
         }
         Update: {
           created_at?: string
           id?: string
           language_pref?: string
+          role?: string
           username?: string
         }
         Relationships: []
