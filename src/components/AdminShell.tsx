@@ -10,7 +10,7 @@ import {
   ChevronRight,
   Shield,
 } from "lucide-react";
-import { useState, useRef, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { useI18n } from "@/lib/i18n";
@@ -35,23 +35,6 @@ export function AdminShell({ children }: { children: ReactNode }) {
   const nav = useNavigate();
   const qc = useQueryClient();
   const [collapsed, setCollapsed] = useState(false);
-  const [hovered, setHovered] = useState(false);
-  const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // When collapsed and user hovers, show full sidebar temporarily
-  // but content margin stays based on the permanent collapsed state (Opera GX style)
-  const showFull = !collapsed || hovered;
-
-  function handleMouseEnter() {
-    if (!collapsed) return;
-    if (hoverTimer.current) clearTimeout(hoverTimer.current);
-    setHovered(true);
-  }
-
-  function handleMouseLeave() {
-    if (!collapsed) return;
-    hoverTimer.current = setTimeout(() => setHovered(false), 150);
-  }
 
   async function signOut() {
     await qc.cancelQueries();
@@ -62,32 +45,25 @@ export function AdminShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex min-h-screen bg-background">
-      {/* ── Invisible hover trigger zone when collapsed ── */}
-      {collapsed && (
-        <div
-          onMouseEnter={handleMouseEnter}
-          className="fixed left-0 inset-y-0 z-40 w-10 cursor-pointer"
-        />
-      )}
-
       {/* ── Sidebar ── */}
       <aside
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
         className={`${
-          showFull ? "w-56" : "w-16"
+          collapsed ? "w-16" : "w-52"
         } fixed inset-y-0 left-0 z-30 flex flex-col border-r border-border/40 bg-[oklch(0.34_0.022_52)] dark:bg-[oklch(0.24_0.015_265)] text-[oklch(0.88_0.015_60)] dark:text-[oklch(0.88_0.01_80)] transition-all duration-[350ms] ease-[var(--ease-out)]`}
       >
-        {/* Brand */}
-        <div className="flex h-14 items-center gap-2.5 border-b border-white/8 px-3 overflow-hidden">
+        {/* Brand — clickable link to dashboard */}
+        <Link
+          to="/admin"
+          className="flex h-14 items-center gap-2.5 border-b border-white/8 px-3 overflow-hidden hover:bg-white/5 transition-colors"
+        >
           <div className="grid size-10 shrink-0 place-items-center rounded-lg bg-primary/25 text-primary text-base font-bold">
             ⚔️
           </div>
-          <div className={`min-w-0 flex-1 truncate transition-all duration-300 ease-[var(--ease-out)] ${showFull ? "opacity-100 max-w-[200px]" : "opacity-0 max-w-0 overflow-hidden"}`}>
+          <div className={`min-w-0 flex-1 truncate transition-all duration-300 ease-[var(--ease-out)] ${!collapsed ? "opacity-100 max-w-[200px]" : "opacity-0 max-w-0 overflow-hidden"}`}>
             <p className="font-display text-base font-semibold leading-tight tracking-tight">Admin</p>
             <p className="text-xs leading-tight text-[oklch(0.88_0.015_60/0.65)] font-medium">HeritageQuest</p>
           </div>
-        </div>
+        </Link>
 
         {/* Navigation */}
         <nav className="flex-1 space-y-0.5 px-2 py-4 overflow-hidden">
@@ -104,12 +80,12 @@ export function AdminShell({ children }: { children: ReactNode }) {
                     ? "bg-primary/15 text-primary shadow-[inset_3px_0_0_var(--color-primary)]"
                     : "text-[oklch(0.88_0.015_60/0.75)] hover:bg-white/7 hover:text-[oklch(0.88_0.015_60/0.92)]"
                 }`}
-                title={!showFull ? label : undefined}
+                title={collapsed ? label : undefined}
               >
                 <Icon className="size-5 shrink-0" />
                 <span
                   className={`truncate transition-all duration-300 ease-[var(--ease-out)] ${
-                    showFull
+                    !collapsed
                       ? "opacity-100 max-w-[180px]"
                       : "opacity-0 max-w-0 overflow-hidden"
                   }`}
@@ -125,7 +101,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
         {/* Language toggle */}
         <div
           className={`flex items-center justify-center border-t border-white/8 px-3 py-3 overflow-hidden transition-all duration-300 ease-[var(--ease-out)] ${
-            showFull ? "max-h-16 opacity-100" : "max-h-0 opacity-0 py-0"
+            !collapsed ? "max-h-16 opacity-100" : "max-h-0 opacity-0 py-0"
           }`}
         >
           <LanguageToggle variant="sidebar" />
@@ -133,16 +109,13 @@ export function AdminShell({ children }: { children: ReactNode }) {
 
         {/* Collapse toggle */}
         <button
-          onClick={() => {
-            setCollapsed((v) => !v);
-            setHovered(false);
-          }}
+          onClick={() => setCollapsed((v) => !v)}
           className="flex w-full items-center gap-3 border-t border-white/8 px-3 py-3 text-sm text-[oklch(0.88_0.015_60/0.6)] transition-colors hover:text-[oklch(0.88_0.015_60/0.85)]"
         >
           {collapsed ? <ChevronRight className="size-4.5 shrink-0" /> : <ChevronLeft className="size-4.5 shrink-0" />}
           <span
             className={`transition-all duration-300 ease-[var(--ease-out)] ${
-              showFull ? "opacity-100 max-w-[120px]" : "opacity-0 max-w-0 overflow-hidden"
+              !collapsed ? "opacity-100 max-w-[120px]" : "opacity-0 max-w-0 overflow-hidden"
             }`}
           >
             {lang === "bm" ? "Runtuhkan" : "Collapse"}
@@ -157,7 +130,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
           <LogOut className="size-4.5 shrink-0" />
           <span
             className={`transition-all duration-300 ease-[var(--ease-out)] ${
-              showFull ? "opacity-100 max-w-[120px]" : "opacity-0 max-w-0 overflow-hidden"
+              !collapsed ? "opacity-100 max-w-[120px]" : "opacity-0 max-w-0 overflow-hidden"
             }`}
           >
             {t("signout")}
@@ -166,7 +139,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
       </aside>
 
       {/* ── Main Content ── */}
-      <main className={`flex-1 ${collapsed ? "ml-16" : "ml-56"} transition-[margin] duration-[350ms] ease-[var(--ease-out)]`}>
+      <main className={`flex-1 ${collapsed ? "ml-16" : "ml-52"} transition-[margin] duration-[350ms] ease-[var(--ease-out)]`}>
         {/* Top bar */}
         <header className="sticky top-0 z-20 flex h-14 items-center justify-between border-b border-border bg-background/80 px-6 backdrop-blur">
           <div className="flex items-center gap-2 text-xs text-muted-foreground">

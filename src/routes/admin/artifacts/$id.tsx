@@ -13,7 +13,7 @@ export const Route = createFileRoute("/admin/artifacts/$id")({
 
 function EditArtifactPage() {
   const { id } = Route.useParams();
-  const { lang } = useI18n();
+  const { t, lang } = useI18n();
   const nav = useNavigate();
   const updateFn = useServerFn(updateArtifact);
   const uploadFn = useServerFn(uploadArtifactImage);
@@ -183,6 +183,7 @@ function EditArtifactPage() {
     // Validate BM fields are filled (required but hidden in main form)
     if (!nameBm.trim() || !eraBm.trim() || !originBm.trim() || !materialBm.trim() || !descBm.trim()) {
       setError('Please fill in BM fields via the Languages button before saving.');
+
       setSaving(false);
       return;
     }
@@ -254,17 +255,17 @@ function EditArtifactPage() {
           <ArrowLeft className="size-4" />
         </button>
         <div>
-          <h1 className="font-display text-2xl font-semibold text-ink">Edit Artifact</h1>
-          <p className="text-sm text-muted-foreground">ID: <code className="rounded bg-accent px-1.5 py-0.5 text-xs">{id}</code></p>
+          <h1 className="font-display text-2xl font-semibold text-ink">{t("admin_edit_artifact")}</h1>
+          <p className="text-sm text-muted-foreground">{t("admin_id_label")} <code className="rounded bg-accent px-1.5 py-0.5 text-xs">{id}</code></p>
         </div>
       </div>
 
       {/* Success banner */}
       {success && (
         <div className="rounded-xl border-2 border-jungle/40 bg-jungle/10 px-4 py-3 text-sm text-jungle font-medium">
-          Artifact updated successfully!{" "}
+          {t("admin_updated_success")}{" "}
           <button type="button" onClick={() => nav({ to: "/admin/artifacts" })} className="underline">
-            Back to artifacts
+            {t("admin_back_to_artifacts")}
           </button>
         </div>
       )}
@@ -279,47 +280,47 @@ function EditArtifactPage() {
       <div className="space-y-6 rounded-xl border-2 border-border bg-card p-6">
         {/* Name — EN only in main form */}
         <div>
-          <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">Name (EN)</label>
+          <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("admin_name_en")}</label>
           <input value={nameEn} onChange={(e) => setNameEn(e.target.value)} className="w-full rounded-xl border-2 border-border bg-background px-4 py-2.5 text-sm outline-none focus:border-primary/50" required />
         </div>
 
         {/* Category */}
         <div>
-          <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">Category</label>
+          <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("admin_category")}</label>
           <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full rounded-xl border-2 border-border bg-background px-4 py-2.5 text-sm outline-none focus:border-primary/50">
-            {categories.length === 0 && <option value="">Loading...</option>}
+            {categories.length === 0 && <option value="">{t("admin_loading")}</option>}
             {categories.map((c: any) => <option key={c.id} value={c.id}>{c.icon} {lang === "bm" ? c.name_bm : c.name_en}</option>)}
           </select>
         </div>
 
         {/* Era — EN only */}
         <div>
-          <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">Era (EN)</label>
+          <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("admin_era_en")}</label>
           <input value={eraEn} onChange={(e) => setEraEn(e.target.value)} className="w-full rounded-xl border-2 border-border bg-background px-4 py-2.5 text-sm outline-none focus:border-primary/50" required />
         </div>
 
         {/* Origin — EN only */}
         <div>
-          <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">Origin (EN)</label>
+          <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("admin_origin_en")}</label>
           <input value={originEn} onChange={(e) => setOriginEn(e.target.value)} className="w-full rounded-xl border-2 border-border bg-background px-4 py-2.5 text-sm outline-none focus:border-primary/50" required />
         </div>
 
         {/* Material — EN only */}
         <div>
-          <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">Material (EN)</label>
+          <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("admin_material_en")}</label>
           <input value={materialEn} onChange={(e) => setMaterialEn(e.target.value)} className="w-full rounded-xl border-2 border-border bg-background px-4 py-2.5 text-sm outline-none focus:border-primary/50" required />
         </div>
 
         {/* Description — EN only */}
         <div>
-          <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">Description (EN)</label>
+          <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("admin_desc_en")}</label>
           <textarea value={descEn} onChange={(e) => setDescEn(e.target.value)} rows={4} className="w-full rounded-xl border-2 border-border bg-background px-4 py-2.5 text-sm outline-none focus:border-primary/50 resize-y" required />
         </div>
       </div>
 
       {/* Images */}
       <div className="space-y-4 rounded-xl border-2 border-border bg-card p-6">
-        <h2 className="font-display text-lg font-semibold text-ink">Images</h2>
+        <h2 className="font-display text-lg font-semibold text-ink">{t("admin_images")}</h2>
         <div className="grid gap-4 sm:grid-cols-3">
           {[0, 1, 2].map((index) => {
             const existingUrl = imageUrls[index];
@@ -329,7 +330,7 @@ function EditArtifactPage() {
 
             return (
               <div key={index}>
-                <p className="mb-2 text-xs font-medium text-muted-foreground">Image {index + 1}</p>
+                <p className="mb-2 text-xs font-medium text-muted-foreground">{t("admin_image_n").replace("{n}", String(index + 1))}</p>
                 {displayUrl ? (
                   <div className="relative aspect-[4/3] rounded-xl border-2 border-border bg-accent/40 overflow-hidden group">
                     <img src={displayUrl} alt={`Image ${index + 1}`} className="h-full w-full object-contain p-2" />
@@ -348,7 +349,7 @@ function EditArtifactPage() {
                     className="flex aspect-[4/3] w-full flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border bg-accent/20 text-muted-foreground transition-colors hover:border-primary/40 hover:bg-accent/40"
                   >
                     <Upload className="size-6" />
-                    <span className="text-xs">Upload image</span>
+                    <span className="text-xs">{t("admin_upload_image")}</span>
                   </button>
                 )}
                 <input
@@ -371,10 +372,10 @@ function EditArtifactPage() {
       <div className="flex items-center gap-3">
         <button type="submit" disabled={saving} className="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 font-semibold text-primary-foreground shadow-md transition-all hover:bg-primary/90 active:scale-95 disabled:opacity-60">
           {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
-          {saving ? "Saving..." : "Save Changes"}
+          {saving ? t("admin_saving") : t("admin_save_changes")}
         </button>
         <button type="button" onClick={() => nav({ to: "/admin/artifacts" })} className="rounded-xl border-2 border-border px-6 py-3 text-sm font-medium text-muted-foreground transition-colors hover:text-ink">
-          Cancel
+          {t("admin_cancel")}
         </button>
         <button
           type="button"
@@ -382,7 +383,7 @@ function EditArtifactPage() {
           className="inline-flex items-center gap-2 rounded-xl border-2 border-border px-4 py-3 text-sm font-medium text-muted-foreground transition-colors hover:border-primary/30 hover:text-ink"
         >
           <Languages className="size-4" />
-          Languages
+          {t("admin_languages")}
         </button>
         <Link
           to="/admin/artifacts/quizzes/$id"
@@ -390,7 +391,7 @@ function EditArtifactPage() {
           className="inline-flex items-center gap-2 rounded-xl border-2 border-border px-4 py-3 text-sm font-medium text-muted-foreground transition-colors hover:border-primary/30 hover:text-ink"
         >
           <HelpCircle className="size-4" />
-          Quizzes
+          {t("admin_quizzes")}
         </Link>
         <div className="flex-1" />
         <button
@@ -399,7 +400,7 @@ function EditArtifactPage() {
           className="inline-flex items-center gap-2 rounded-xl border-2 border-destructive/30 px-6 py-3 text-sm font-semibold text-destructive transition-all hover:bg-destructive/10 active:scale-95"
         >
           <Trash2 className="size-4" />
-          Delete
+          {t("admin_delete")}
         </button>
       </div>
 
@@ -540,13 +541,12 @@ function EditArtifactPage() {
                 <AlertTriangle className="size-6 text-destructive" />
               </div>
               <div>
-                <h3 className="font-display text-lg font-semibold text-ink">Delete Artifact</h3>
-                <p className="text-sm text-muted-foreground">This action cannot be undone.</p>
+                <h3 className="font-display text-lg font-semibold text-ink">{t("admin_delete_artifact")}</h3>
+                <p className="text-sm text-muted-foreground">{t("admin_delete_confirm_desc")}</p>
               </div>
             </div>
             <p className="mb-6 text-sm text-muted-foreground">
-              Are you sure you want to delete <strong className="text-ink">{nameEn}</strong>?
-              This will permanently remove the artifact, its images, and all user progress data.
+              {lang === "bm" ? `Adakah anda pasti mahu memadam ${nameEn}? Tindakan ini akan memadamkan artifak, gambar, dan semua data kemajuan pengguna secara kekal.` : `Are you sure you want to delete ${nameEn}? This will permanently remove the artifact, its images, and all user progress data.`}
             </p>
             <div className="flex items-center gap-3">
               <button
@@ -555,7 +555,7 @@ function EditArtifactPage() {
                 disabled={deleting}
                 className="flex-1 rounded-xl border-2 border-border px-4 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:text-ink"
               >
-                Cancel
+                {t("admin_cancel")}
               </button>
               <button
                 type="button"
@@ -564,7 +564,7 @@ function EditArtifactPage() {
                 className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-destructive px-4 py-2.5 text-sm font-semibold text-destructive-foreground transition-all hover:bg-destructive/90 active:scale-95 disabled:opacity-60"
               >
                 {deleting ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
-                {deleting ? "Deleting..." : "Delete"}
+                {deleting ? t("admin_deleting") : t("admin_delete")}
               </button>
             </div>
           </div>
