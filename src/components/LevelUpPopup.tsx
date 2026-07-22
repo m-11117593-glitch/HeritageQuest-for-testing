@@ -93,6 +93,7 @@ export function LevelUpPopup({ level, levelUps, onClose }: Props) {
 
   return createPortal(
     <div
+      data-portal-overlay="true"
       className={`fixed inset-0 z-[200] flex items-center justify-center p-4 transition-all duration-500 ${
         visible ? "opacity-100" : "opacity-0 pointer-events-none"
       }`}

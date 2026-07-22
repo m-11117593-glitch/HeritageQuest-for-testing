@@ -28,7 +28,7 @@ function slugify(text: string): string {
 
 function AddArtifactPage() {
   const nav = useNavigate();
-  const { lang } = useI18n();
+  const { t, lang } = useI18n();
   const createFn = useServerFn(createArtifact);
   const uploadFn = useServerFn(uploadArtifactImage);
   const translateFn = useServerFn(translateText);
@@ -138,6 +138,7 @@ function AddArtifactPage() {
 
     // Validate BM fields are filled (required but hidden in main form)
     if (!nameBm.trim() || !eraBm.trim() || !originBm.trim() || !materialBm.trim() || !descBm.trim()) {
+      // Translating on the server side — keep English error so user can understand
       setError('Please fill in BM fields via the Languages button before saving.');
       setSaving(false);
       return;
@@ -203,8 +204,8 @@ function AddArtifactPage() {
           <ArrowLeft className="size-4" />
         </button>
         <div>
-          <h1 className="font-display text-2xl font-semibold text-ink">Add New Artifact</h1>
-          <p className="text-sm text-muted-foreground">Fill in the details below to add a new museum artifact.</p>
+          <h1 className="font-display text-2xl font-semibold text-ink">{t("admin_add_new_artifact")}</h1>
+          <p className="text-sm text-muted-foreground">{t("admin_add_new_subtitle")}</p>
         </div>
       </div>
 
@@ -217,32 +218,30 @@ function AddArtifactPage() {
 
       <div className="space-y-6 rounded-xl border-2 border-border bg-card p-6">
         {/* ID / Slug */}
-        <div>
-          <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Artifact ID
+        <div>            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            {t("admin_artifact_id")}
           </label>
           <div className="flex items-center gap-2">
             <input
               value={slug}
               onChange={(e) => setSlug(slugify(e.target.value))}
-              placeholder="auto-generated-from-name"
+              placeholder={t("admin_auto_from_name")}
               className="flex-1 rounded-xl border-2 border-border bg-background px-4 py-2.5 text-sm outline-none transition-colors focus:border-primary/50"
               required
               pattern="^[a-z0-9-]+$"
             />
-            <span className="text-xs text-muted-foreground">(kebab-case)</span>
+            <span className="text-xs text-muted-foreground">{t("admin_slug_hint")}</span>
           </div>
         </div>
 
         {/* Name — EN only in main form, BM via Languages modal */}
-        <div>
-          <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Name (EN)
+        <div>            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            {t("admin_name_en")}
           </label>
           <input
             value={nameEn}
             onChange={(e) => handleNameEnChange(e.target.value)}
-            placeholder="Name in English"
+            placeholder={t("admin_name_en_placeholder_form")}
             className="w-full rounded-xl border-2 border-border bg-background px-4 py-2.5 text-sm outline-none transition-colors focus:border-primary/50"
             required
           />
@@ -251,14 +250,14 @@ function AddArtifactPage() {
         {/* Category */}
         <div>
           <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Category
+            {t("admin_category")}
           </label>
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
             className="w-full rounded-xl border-2 border-border bg-background px-4 py-2.5 text-sm outline-none transition-colors focus:border-primary/50"
           >
-            {categories.length === 0 && <option value="">Loading...</option>}
+            {categories.length === 0 && <option value="">{t("admin_loading")}</option>}
             {categories.map((c: any) => (
               <option key={c.id} value={c.id}>{c.icon} {lang === "bm" ? c.name_bm : c.name_en}</option>
             ))}
@@ -268,12 +267,12 @@ function AddArtifactPage() {
         {/* Era — EN only in main form */}
         <div>
           <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Era (EN)
+            {t("admin_era_en")}
           </label>
           <input
             value={eraEn}
             onChange={(e) => setEraEn(e.target.value)}
-            placeholder="15th century"
+            placeholder={t("admin_era_en_placeholder")}
             className="w-full rounded-xl border-2 border-border bg-background px-4 py-2.5 text-sm outline-none transition-colors focus:border-primary/50"
             required
           />
@@ -282,12 +281,12 @@ function AddArtifactPage() {
         {/* Origin — EN only in main form */}
         <div>
           <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Origin (EN)
+            {t("admin_origin_en")}
           </label>
           <input
             value={originEn}
             onChange={(e) => setOriginEn(e.target.value)}
-            placeholder="Origin in English"
+            placeholder={t("admin_origin_en_placeholder")}
             className="w-full rounded-xl border-2 border-border bg-background px-4 py-2.5 text-sm outline-none transition-colors focus:border-primary/50"
             required
           />
@@ -296,12 +295,12 @@ function AddArtifactPage() {
         {/* Material — EN only in main form */}
         <div>
           <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Material (EN)
+            {t("admin_material_en")}
           </label>
           <input
             value={materialEn}
             onChange={(e) => setMaterialEn(e.target.value)}
-            placeholder="Material in English"
+            placeholder={t("admin_material_en_placeholder")}
             className="w-full rounded-xl border-2 border-border bg-background px-4 py-2.5 text-sm outline-none transition-colors focus:border-primary/50"
             required
           />
@@ -310,12 +309,12 @@ function AddArtifactPage() {
         {/* Description — EN only in main form */}
         <div>
           <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Description (EN)
+            {t("admin_desc_en")}
           </label>
           <textarea
             value={descEn}
             onChange={(e) => setDescEn(e.target.value)}
-            placeholder="Long description in English..."
+            placeholder={t("admin_desc_en_placeholder")}
             rows={4}
             className="w-full rounded-xl border-2 border-border bg-background px-4 py-2.5 text-sm outline-none transition-colors focus:border-primary/50 resize-y"
             required
@@ -325,12 +324,12 @@ function AddArtifactPage() {
 
       {/* Image Uploads */}
       <div className="space-y-4 rounded-xl border-2 border-border bg-card p-6">
-        <h2 className="font-display text-lg font-semibold text-ink">Images</h2>
-        <p className="text-xs text-muted-foreground">Upload up to 3 images (JPEG, PNG, or WebP, max 5MB each)</p>
+        <h2 className="font-display text-lg font-semibold text-ink">{t("admin_images")}</h2>
+        <p className="text-xs text-muted-foreground">{t("admin_images_hint")}</p>
         <div className="grid gap-4 sm:grid-cols-3">
           {[0, 1, 2].map((index) => (
             <div key={index}>
-              <p className="mb-2 text-xs font-medium text-muted-foreground">Image {index + 1}</p>
+              <p className="mb-2 text-xs font-medium text-muted-foreground">{t("admin_image_n").replace("{n}", String(index + 1))}</p>
               {images[index] ? (
                 <div className="relative aspect-[4/3] rounded-xl border-2 border-border bg-accent/40 overflow-hidden group">
                   <img
@@ -353,7 +352,7 @@ function AddArtifactPage() {
                   className="flex aspect-[4/3] w-full flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border bg-accent/20 text-muted-foreground transition-colors hover:border-primary/40 hover:bg-accent/40"
                 >
                   <Upload className="size-6" />
-                  <span className="text-xs">Click to upload</span>
+                  <span className="text-xs">{t("admin_click_upload")}</span>
                 </button>
               )}
               <input
@@ -383,14 +382,14 @@ function AddArtifactPage() {
           ) : (
             <Save className="size-4" />
           )}
-          {saving ? "Saving..." : "Save Artifact"}
+          {saving ? t("admin_saving") : t("admin_save_artifact")}
         </button>
         <button
           type="button"
           onClick={() => nav({ to: "/admin/artifacts" })}
           className="rounded-xl border-2 border-border px-6 py-3 text-sm font-medium text-muted-foreground transition-colors hover:text-ink"
         >
-          Cancel
+          {t("admin_cancel")}
         </button>
         <button
           type="button"
@@ -398,7 +397,7 @@ function AddArtifactPage() {
           className="inline-flex items-center gap-2 rounded-xl border-2 border-border px-4 py-3 text-sm font-medium text-muted-foreground transition-colors hover:border-primary/30 hover:text-ink"
         >
           <Languages className="size-4" />
-          Languages
+          {t("admin_languages")}
         </button>
       </div>
 
@@ -411,10 +410,10 @@ function AddArtifactPage() {
               <div>
                 <h3 className="font-display text-lg font-semibold text-ink flex items-center gap-2">
                   <Languages className="size-5" />
-                  Bilingual Content
+                  {t("admin_bilingual")}
                 </h3>
                 <p className="text-sm text-muted-foreground mt-1">
-                  View and edit both Bahasa Melayu and English side by side.
+                  {t("admin_bilingual_desc")}
                 </p>
               </div>
               <button
@@ -430,7 +429,7 @@ function AddArtifactPage() {
             <div className="mb-6 rounded-xl border-2 border-primary/20 bg-primary/5 px-4 py-3">
               <div className="flex items-center gap-3">
                 <p className="flex-1 text-sm text-muted-foreground">
-                  Fill in EN fields above and click to auto-translate to BM.
+                  {t("admin_auto_translate_hint")}
                 </p>
                 <button
                   type="button"
@@ -439,12 +438,12 @@ function AddArtifactPage() {
                   className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-all hover:bg-primary/90 active:scale-95 disabled:opacity-60"
                 >
                   {translating ? <Loader2 className="size-3.5 animate-spin" /> : <Languages className="size-3.5" />}
-                  {translating ? "Translating..." : "Auto-translate to BM"}
+                  {translating ? t("admin_translating") : t("admin_auto_translate_btn")}
                 </button>
               </div>
               {translationDone && (
                 <p className="mt-2 text-xs font-medium text-jungle animate-in slide-in-from-top-1 fade-in duration-200">
-                  ✓ BM fields translated successfully!
+                  {t("admin_translate_done")}
                 </p>
               )}
               {translationError && (
@@ -522,7 +521,7 @@ function AddArtifactPage() {
                 onClick={() => setShowLanguages(false)}
                 className="rounded-xl border-2 border-border px-5 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:text-ink"
               >
-                Close
+                {t("close")}
               </button>
             </div>
           </div>

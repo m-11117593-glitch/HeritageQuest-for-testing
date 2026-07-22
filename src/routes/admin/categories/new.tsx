@@ -14,7 +14,7 @@ function slugify(text: string): string {
 }
 
 function AddCategoryPage() {
-  const { lang } = useI18n();
+  const { t, lang } = useI18n();
   const nav = useNavigate();
   const createFn = useServerFn(createCategory);
 
@@ -54,8 +54,8 @@ function AddCategoryPage() {
           <ArrowLeft className="size-4" />
         </button>
         <div>
-          <h1 className="font-display text-2xl font-semibold text-ink">{lang === "bm" ? "Tambah Kategori Baru" : "Add New Category"}</h1>
-          <p className="text-sm text-muted-foreground">{lang === "bm" ? "Cipta kategori artifak baharu." : "Create a new artifact category."}</p>
+          <h1 className="font-display text-2xl font-semibold text-ink">{t("admin_add_category")}</h1>
+          <p className="text-sm text-muted-foreground">{t("admin_add_category_sub")}</p>
         </div>
       </div>
 
@@ -65,21 +65,21 @@ function AddCategoryPage() {
 
       <div className="space-y-4 rounded-xl border-2 border-border bg-card p-6">
         <div>
-          <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">ID</label>
+          <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("admin_id")}</label>
           <input value={id} onChange={(e) => setId(slugify(e.target.value))} placeholder="kebab-case-id" className="w-full rounded-xl border-2 border-border bg-background px-4 py-2.5 text-sm outline-none focus:border-primary/50" required pattern="^[a-z0-9-]+$" />
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">Name (BM)</label>
-            <input value={nameBm} onChange={(e) => setNameBm(e.target.value)} placeholder="Nama dalam BM" className="w-full rounded-xl border-2 border-border bg-background px-4 py-2.5 text-sm outline-none focus:border-primary/50" required />
+            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("admin_name_bm")}</label>
+            <input value={nameBm} onChange={(e) => setNameBm(e.target.value)} placeholder={t("admin_name_bm_placeholder")} className="w-full rounded-xl border-2 border-border bg-background px-4 py-2.5 text-sm outline-none focus:border-primary/50" required />
           </div>
           <div>
-            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">Name (EN)</label>
-            <input value={nameEn} onChange={(e) => handleNameEnChange(e.target.value)} placeholder="Name in English" className="w-full rounded-xl border-2 border-border bg-background px-4 py-2.5 text-sm outline-none focus:border-primary/50" required />
+            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("admin_name_en")}</label>
+            <input value={nameEn} onChange={(e) => handleNameEnChange(e.target.value)} placeholder={t("admin_name_en_placeholder")} className="w-full rounded-xl border-2 border-border bg-background px-4 py-2.5 text-sm outline-none focus:border-primary/50" required />
           </div>
         </div>
         <div>
-          <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">Icon (emoji)</label>
+          <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("admin_icon_emoji")}</label>
           <input value={icon} onChange={(e) => setIcon(e.target.value)} placeholder="🗡️" className="w-full rounded-xl border-2 border-border bg-background px-4 py-2.5 text-sm outline-none focus:border-primary/50" required />
         </div>
       </div>
@@ -87,10 +87,10 @@ function AddCategoryPage() {
       <div className="flex items-center gap-3">
         <button type="submit" disabled={saving} className="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 font-semibold text-primary-foreground shadow-md transition-all hover:bg-primary/90 active:scale-95 disabled:opacity-60">
           {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
-          {saving ? "Saving..." : (lang === "bm" ? "Simpan" : "Save")}
+          {saving ? t("admin_saving") : t("admin_save")}
         </button>
         <button type="button" onClick={() => nav({ to: "/admin/categories" })} className="rounded-xl border-2 border-border px-6 py-3 text-sm font-medium text-muted-foreground transition-colors hover:text-ink">
-          {lang === "bm" ? "Batal" : "Cancel"}
+          {t("admin_cancel")}
         </button>
       </div>
     </form>

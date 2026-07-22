@@ -73,8 +73,8 @@ function EditCategoryPage() {
           <ArrowLeft className="size-4" />
         </button>
         <div>
-          <h1 className="font-display text-2xl font-semibold text-ink">{lang === "bm" ? "Sunting Kategori" : "Edit Category"}</h1>
-          <p className="text-sm text-muted-foreground">ID: <code className="rounded bg-accent px-1.5 py-0.5 text-xs">{id}</code></p>
+          <h1 className="font-display text-2xl font-semibold text-ink">{t("admin_edit_category")}</h1>
+          <p className="text-sm text-muted-foreground">{t("admin_id_label")} <code className="rounded bg-accent px-1.5 py-0.5 text-xs">{id}</code></p>
         </div>
       </div>
 
@@ -85,21 +85,21 @@ function EditCategoryPage() {
       <div className="space-y-4 rounded-xl border-2 border-border bg-card p-6">
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">Name (BM)</label>
+            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("admin_name_bm")}</label>
             <input value={nameBm} onChange={(e) => setNameBm(e.target.value)} className="w-full rounded-xl border-2 border-border bg-background px-4 py-2.5 text-sm outline-none focus:border-primary/50" required />
           </div>
           <div>
-            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">Name (EN)</label>
+            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("admin_name_en")}</label>
             <input value={nameEn} onChange={(e) => setNameEn(e.target.value)} className="w-full rounded-xl border-2 border-border bg-background px-4 py-2.5 text-sm outline-none focus:border-primary/50" required />
           </div>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">Icon (emoji)</label>
+            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("admin_icon_emoji")}</label>
             <input value={icon} onChange={(e) => setIcon(e.target.value)} className="w-full rounded-xl border-2 border-border bg-background px-4 py-2.5 text-sm outline-none focus:border-primary/50" required />
           </div>
           <div>
-            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">{lang === "bm" ? "Susunan" : "Sort Order"}</label>
+            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("admin_sort_order")}</label>
             <input type="number" value={sortOrder} onChange={(e) => setSortOrder(parseInt(e.target.value) || 0)} className="w-full rounded-xl border-2 border-border bg-background px-4 py-2.5 text-sm outline-none focus:border-primary/50" required />
           </div>
         </div>
@@ -108,10 +108,10 @@ function EditCategoryPage() {
       <div className="flex items-center gap-3">
         <button type="submit" disabled={saving} className="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 font-semibold text-primary-foreground shadow-md transition-all hover:bg-primary/90 active:scale-95 disabled:opacity-60">
           {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
-          {saving ? "Saving..." : (lang === "bm" ? "Simpan" : "Save Changes")}
+          {saving ? t("admin_saving") : t("admin_save_changes")}
         </button>
         <button type="button" onClick={() => nav({ to: "/admin/categories" })} className="rounded-xl border-2 border-border px-6 py-3 text-sm font-medium text-muted-foreground transition-colors hover:text-ink">
-          {lang === "bm" ? "Batal" : "Cancel"}
+          {t("admin_cancel")}
         </button>
       </div>
     </form>

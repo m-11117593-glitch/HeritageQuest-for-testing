@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   Sparkles,
@@ -140,13 +140,23 @@ export function ArtifactModal({ result, onClose }: Props) {
     action();
   }
 
+  /** Prevent Radix Dialog from blocking pointer events on portal overlays (fixes X buttons on mobile) */
+  function handlePointerDownOutside(e: any) {
+    const target = e.target as HTMLElement;
+    if (target.closest('[data-portal-overlay]')) {
+      e.preventDefault();
+    }
+  }
+
   return (
+    <Fragment>
     <Dialog open onOpenChange={(v) => {
       if (!v) {
         confirmIfInProgress(() => onClose());
       }
     }}>
       <DialogContent 
+        onPointerDownOutside={handlePointerDownOutside}
         className={`max-h-[90vh] overflow-y-auto rounded-[28px] border-2 transition-[max-width] duration-300 ease-[var(--ease-out)] ${
           hardMode ? "border-cyan-400/20 bg-gradient-to-br from-zinc-100 via-zinc-50 to-amber-50" : "border-border bg-card"
         } ${
@@ -368,7 +378,8 @@ export function ArtifactModal({ result, onClose }: Props) {
           )}
         </div>
       </DialogContent>
-      {/* Level-up popup overlay */}
+    </Dialog>
+      {/* Level-up popup overlay — outside <Dialog> to avoid Radix blocking pointer events on mobile */}
       {showLevelUp && localResult.levelUps > 0 && (
         <LevelUpPopup
           level={localResult.level}
@@ -380,6 +391,7 @@ export function ArtifactModal({ result, onClose }: Props) {
         typeof document !== "undefined" &&
         createPortal(
           <div
+            data-portal-overlay="true"
             role="dialog"
             aria-modal="true"
             aria-label={t("inspect_image")}
@@ -406,6 +418,6 @@ export function ArtifactModal({ result, onClose }: Props) {
           </div>,
           document.body,
         )}
-    </Dialog>
+    </Fragment>
   );
 }

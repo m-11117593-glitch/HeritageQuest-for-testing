@@ -47,7 +47,7 @@ function AdminCategoriesPage() {
         <div>
           <h1 className="font-display text-2xl font-semibold text-ink">{t("admin_categories")}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {categories.length} {lang === "bm" ? "kategori" : "categories"}
+            {categories.length} {t("admin_categories_count").replace("{n}", String(categories.length))}
           </p>
         </div>
         <Link
@@ -55,7 +55,7 @@ function AdminCategoriesPage() {
           className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-all hover:bg-primary/90 active:scale-95"
         >
           <PlusCircle className="size-4" />
-          {lang === "bm" ? "Tambah Baru" : "Add New"}
+          {t("admin_add_new")}
         </Link>
       </div>
 
@@ -101,8 +101,7 @@ function AdminCategoriesPage() {
                   onClick={() => nav({ to: "/admin/categories/$id", params: { id: cat.id } })}
                   className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-ink transition-colors"
                 >
-                  <Edit3 className="size-3" />
-                  {lang === "bm" ? "Sunting" : "Edit"}
+                  <Edit3 className="size-3" />                    {t("admin_edit")}
                 </button>
                 <button
                   type="button"
@@ -115,7 +114,7 @@ function AdminCategoriesPage() {
                   ) : (
                     <Trash2 className="size-3" />
                   )}
-                  {lang === "bm" ? "Padam" : "Delete"}
+                  {t("admin_delete")}
                 </button>
               </div>
             </div>
@@ -125,10 +124,10 @@ function AdminCategoriesPage() {
               <Package className="size-12 text-muted-foreground/30" />
               <div>
                 <p className="font-display text-lg text-ink">
-                  {lang === "bm" ? "Belum Ada Kategori" : "No categories yet"}
+                  {t("admin_no_categories")}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  {lang === "bm" ? "Cipta kategori pertama anda." : "Create your first category."}
+                  {t("admin_no_categories_desc")}
                 </p>
               </div>
             </div>
