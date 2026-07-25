@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Clock, Sparkles, Scroll, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useI18n } from "@/lib/i18n";
+import { useI18n, STRINGS, type StringKey } from "@/lib/i18n";
 import { artifactImageUrl } from "@/lib/artifact-images";
 import {
   CATEGORY_META,
@@ -100,7 +100,7 @@ function JourneyPage() {
               ).artifacts;
               if (!art) return null;
               const cat = art.category as CategoryKey;
-              const meta = CATEGORY_META[cat];
+              const meta = CATEGORY_META[cat] ?? { emoji: "📦", color: "oklch(0.55 0.04 260)", bg: "oklch(0.94 0.02 260)" };
               const nm = lang === "bm" ? art.name_bm : art.name_en;
               const imageUrl = artifactImageUrl(art.id, art.image_url);
               const isLatest = i === 0;
@@ -177,7 +177,7 @@ function JourneyPage() {
                           className="inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[9px] font-semibold uppercase tracking-widest"
                           style={{ background: meta.bg, color: meta.color }}
                         >
-                          {meta.emoji} {t(`category_${cat}` as `category_${CategoryKey}`)}
+                          {meta.emoji} {`category_${cat}` in STRINGS ? t(`category_${cat}` as StringKey) : cat}
                         </span>
 
                         {/* Latest badge */}

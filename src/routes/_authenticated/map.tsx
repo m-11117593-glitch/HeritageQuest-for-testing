@@ -284,7 +284,7 @@ function MapPage() {
               const p = PIN_POSITIONS[a.id];
               if (!p) return null;
               const isScanned = scannedSet.has(a.id);
-              const meta = CATEGORY_META[a.category as CategoryKey];
+              const meta = CATEGORY_META[a.category as CategoryKey] ?? { emoji: "📦", color: "oklch(0.55 0.04 260)", bg: "oklch(0.94 0.02 260)" };
               const pulsing = pulseId === a.id;
               const name = lang === "bm" ? a.name_bm : a.name_en;
               const routeNum = ROUTE_INDEX[a.id] ?? null;
@@ -486,7 +486,7 @@ function MapPage() {
                               {routeNum !== null && (
                                 <span
                                   className="absolute left-1 top-1 grid size-5 place-items-center rounded-full text-[10px] font-bold text-white shadow-xs"
-                                  style={{ background: CATEGORY_META[a.category as CategoryKey].color }}
+                                  style={{ background: (CATEGORY_META[a.category as CategoryKey] ?? { color: "oklch(0.55 0.04 260)" }).color }}
                                 >
                                   {routeNum}
                                 </span>
@@ -551,8 +551,8 @@ function MapPage() {
                 <p className="text-[10px] text-muted-foreground">
                   {lang === "bm" ? "Lokasi:" : "Location:"}{" "}
                   {lang === "bm"
-                    ? ZONE_LAYOUT[nextRouteArtifact.category as CategoryKey].label_bm
-                    : ZONE_LAYOUT[nextRouteArtifact.category as CategoryKey].label_en}
+                    ? (ZONE_LAYOUT[nextRouteArtifact.category as CategoryKey]?.label_bm ?? nextRouteArtifact.category)
+                    : (ZONE_LAYOUT[nextRouteArtifact.category as CategoryKey]?.label_en ?? nextRouteArtifact.category)}
                 </p>
               </div>
               <ArrowRight className="size-5 shrink-0 text-primary/60" />

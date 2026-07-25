@@ -17,7 +17,7 @@ export function UniqueQuestOffer({ offer, onClose }: Props) {
   const accept = useServerFn(acceptUniqueQuest);
   const decline = useServerFn(declineUniqueQuest);
   const cat = offer.target_category as CategoryKey;
-  const meta = CATEGORY_META[cat];
+  const meta = CATEGORY_META[cat] ?? { emoji: "📦", color: "oklch(0.55 0.04 260)", bg: "oklch(0.94 0.02 260)" };
   const name = lang === "bm" ? offer.name_bm : offer.name_en;
   const desc = lang === "bm" ? offer.description_bm : offer.description_en;
 
