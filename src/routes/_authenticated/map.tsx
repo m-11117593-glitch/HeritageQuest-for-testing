@@ -391,14 +391,11 @@ function MapPage() {
               const customZonesBelow = allZoneRects.filter((r) => !r.isKnown).map((r) => r.z);
               const extD = customZonesBelow.length > 0
                 ? (() => {
-                    const lastRouteId = ROUTE_ORDER[ROUTE_ORDER.length - 1];
-                    const lastPin = allPinPositions[lastRouteId];
-                    if (!lastPin) return '';
-                    // Connect to center of first custom zone
+                    if (!dynamicRoutePathD) return '';
                     const firstCustom = customZonesBelow[0];
                     const cx = firstCustom.x + firstCustom.w / 2;
                     const cy = firstCustom.y + firstCustom.h / 2;
-                    return ` M ${lastPin.x} ${lastPin.y} L ${cx} ${cy}`;
+                    return ` L ${cx} ${cy}`; // continuous line — no M to avoid dash reset
                   })()
                 : '';
               const fullD = dynamicRoutePathD + extD;
