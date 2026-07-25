@@ -196,44 +196,58 @@ function MapPage() {
     });
   }, [categoryEntries]);
 
-  // ─── Pin positions: original for known, dynamic for custom ───
-  // If a known pin falls outside its zone (e.g. toys halved), snap it inside.
+  // ─── Pin positions: original V-formation for known, computed V for custom ───
+  // Known zones where all pins fit keep their original positions.
+  // If any pin falls outside its zone, ALL pins in that zone get a proper V formation.
   const allPinPositions = useMemo(() => {
     const pos = { ...PIN_POSITIONS };
 
-    // Snap any known pin that falls outside its zone — distribute evenly
+    const margin = 2.5;
     for (const zr of allZoneRects) {
       if (!zr.isKnown) continue;
-      const { x, y, w } = zr.z;
-      const margin = 2.5;
-      const toSnap: { id: string; origIdx: number }[] = [];
-      for (const [id, p] of Object.entries(PIN_POSITIONS)) {
-        const art = artifacts.find((a) => a.id === id);
-        if (!art || art.category !== zr.cat) continue;
-        if (p.x < x + margin || p.x > x + w - margin) {
-          toSnap.push({ id, origIdx: ROUTE_INDEX[id] ?? 0 });
-        }
-      }
-      toSnap.sort((a, b) => a.origIdx - b.origIdx);
-      toSnap.forEach(({ id }, i) => {
-        const step = w / (toSnap.length + 1);
-        pos[id] = { x: x + step * (i + 1), y: PIN_POSITIONS[id].y };
+      const { x, y, w, h } = zr.z;
+      // Collect all known artifacts in this zone
+      const catArtifacts = artifacts
+        .filter((a) => a.category === zr.cat)
+        .sort((a, b) => (ROUTE_INDEX[a.id] ?? 0) - (ROUTE_INDEX[b.id] ?? 0));
+      if (catArtifacts.length === 0) continue;
+
+      // Check if any pin in this zone falls outside bounds
+      const needsReposition = catArtifacts.some((a) => {
+        const p = PIN_POSITIONS[a.id];
+        return !p || p.x < x + margin || p.x > x + w - margin || p.y < y + margin || p.y > y + h - margin;
       });
+
+      if (needsReposition) {
+        // Reposition ALL artifacts in this zone into a V formation
+        const n = catArtifacts.length;
+        catArtifacts.forEach((a, i) => {
+          const xFrac = (i + 1) / (n + 1);
+          const isMiddle = n === 3 && i === 1;
+          const yFrac = n <= 2 ? 0.5 : isMiddle ? 0.7 : 0.25;
+          pos[a.id] = {
+            x: x + w * xFrac,
+            y: y + h * yFrac,
+          };
+        });
+      }
     }
 
-    // Dynamic pins for custom artifacts
+    // Dynamic pins for custom artifacts — also in V formation per zone
     const customZones = allZoneRects.filter((r) => !r.isKnown);
     for (const zone of customZones) {
-      const items = artifacts.filter((a) => a.category === zone.cat);
-      const total = items.length;
-      if (!total) continue;
-      const cols = Math.min(total, 4);
-      const spacing = zone.z.w / (cols + 1);
-      const cy = zone.z.y + zone.z.h / 2;
+      const items = artifacts
+        .filter((a) => a.category === zone.cat)
+        .sort((a, b) => a.sort_order - b.sort_order);
+      const n = items.length;
+      if (!n) continue;
       items.forEach((a, i) => {
+        const xFrac = (i + 1) / (n + 1);
+        const isMiddle = n === 3 && i === 1;
+        const yFrac = n <= 2 ? 0.5 : isMiddle ? 0.7 : 0.25;
         pos[a.id] = {
-          x: zone.z.x + spacing * (i % cols + 1),
-          y: cy,
+          x: zone.z.x + zone.z.w * xFrac,
+          y: zone.z.y + zone.z.h * yFrac,
         };
       });
     }
