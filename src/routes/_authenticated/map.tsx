@@ -110,6 +110,41 @@ function MapPage() {
   const totalScanned = scannedSet.size;
   const pct = Math.round((totalScanned / TOTAL_ARTIFACTS) * 100);
 
+  // Compute all unique categories from the DB, preserving CATEGORY_ORDER first
+  const categoryEntries = useMemo(() => {
+    const seen = new Set<string>();
+    const entries: { cat: string; isKnown: boolean }[] = [];
+    // Known categories first, in order
+    for (const cat of CATEGORY_ORDER) {
+      seen.add(cat);
+      entries.push({ cat, isKnown: true });
+    }
+    // Custom categories from DB, appended after known ones
+    for (const a of artifacts) {
+      if (!seen.has(a.category)) {
+        seen.add(a.category);
+        entries.push({ cat: a.category, isKnown: false });
+      }
+    }
+    return entries;
+  }, [artifacts]);
+
+  // Generate fallback meta for custom categories
+  function categoryMeta(cat: string): { emoji: string; color: string; bg: string } {
+    if (cat in CATEGORY_META) {
+      return CATEGORY_META[cat as CategoryKey];
+    }
+    // Deterministic fallback based on category name hash
+    const hash = cat.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
+    const hues = [25, 60, 265, 165, 330, 200, 30, 280, 80, 340];
+    const hue = hues[hash % hues.length];
+    return {
+      emoji: "📦",
+      color: `oklch(0.55 0.10 ${hue})`,
+      bg: `oklch(0.93 0.04 ${hue})`,
+    };
+  }
+
   const [selected, setSelected] = useState<MapArtifact | null>(null);
   const [pulseId, setPulseId] = useState<string | null>(null);
   const [lockedNote, setLockedNote] = useState<string | null>(null);
@@ -420,7 +455,14 @@ function MapPage() {
           })}
         </div>
 
-        <p className="mt-3 text-xs text-muted-foreground">{t("scan_hint")}</p>
+        {artifacts.length > ROUTE_ORDER.length && (
+          <p className="mt-3 text-xs text-muted-foreground">
+            {lang === "bm"
+              ? `💡 ${artifacts.length - ROUTE_ORDER.length} artifak tambahan tidak dipaparkan di atas pelan lantai. Lihat senarai di sebelah.`
+              : `💡 ${artifacts.length - ROUTE_ORDER.length} additional artifacts not shown on the floorplan. See the list on the right.`}
+          </p>
+        )}
+        <p className="mt-1 text-xs text-muted-foreground">{t("scan_hint")}</p>
 
         {lockedNote && (
           <p className="mt-2 rounded-2xl border-2 border-border bg-muted/50 px-4 py-2 text-xs text-muted-foreground shake">
@@ -429,12 +471,18 @@ function MapPage() {
         )}
       </section>
 
-      {/* ─── Right: Category List + Route Guide ─── */}
+      {/* ─── Right: Dynamic Category List + Route Guide ─── */}
       <section className="space-y-4">
-        {CATEGORY_ORDER.map((cat) => {
+        {categoryEntries.map(({ cat, isKnown }) => {
           const items = artifacts.filter((a) => a.category === cat);
+          if (items.length === 0) return null;
           const scannedCount = items.filter((a) => scannedSet.has(a.id)).length;
-          const meta = CATEGORY_META[cat];
+          const meta = categoryMeta(cat);
+          const label = isKnown
+            ? (lang === "bm"
+                ? ZONE_LAYOUT[cat as CategoryKey]?.label_bm ?? cat
+                : ZONE_LAYOUT[cat as CategoryKey]?.label_en ?? cat)
+            : cat;
           return (
             <div key={cat} className="game-card p-4">
               <div className="mb-3 flex items-center justify-between">
@@ -446,7 +494,7 @@ function MapPage() {
                     {meta.emoji}
                   </span>
                   <h3 className="font-display text-lg leading-none">
-                    {t(`category_${cat}` as `category_${CategoryKey}`)}
+                    {label}
                   </h3>
                 </div>
                 <span className="chip">
@@ -486,7 +534,7 @@ function MapPage() {
                               {routeNum !== null && (
                                 <span
                                   className="absolute left-1 top-1 grid size-5 place-items-center rounded-full text-[10px] font-bold text-white shadow-xs"
-                                  style={{ background: (CATEGORY_META[a.category as CategoryKey] ?? { color: "oklch(0.55 0.04 260)" }).color }}
+                                  style={{ background: categoryMeta(a.category).color }}
                                 >
                                   {routeNum}
                                 </span>
@@ -518,7 +566,7 @@ function MapPage() {
           );
         })}
 
-        {/* ─── Route Guide Card — fills remaining space, genuinely useful ─── */}
+        {/* ─── Route Guide Card ─── */}
         <div className="game-card p-4">
           <div className="mb-2 flex items-center gap-2">
             <span className="grid size-8 place-items-center rounded-full bg-primary/10 text-primary">
