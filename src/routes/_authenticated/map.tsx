@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState, useMemo } from "react";
-import { Lock, MapPin, Compass, ArrowRight } from "lucide-react";
+import { Lock, MapPin, ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
 import { artifactImageUrl } from "@/lib/artifact-images";
@@ -290,18 +290,27 @@ function MapPage() {
               );
             })}
 
-            {/* Suggested route path */}
+            {/* Suggested route path — bolder + animated dash */}
             <path
               d={ROUTE_PATH_D}
               fill="none"
-              stroke="oklch(0.5 0.06 25 / 0.35)"
-              strokeWidth={0.35}
-              strokeDasharray="0.6 0.5"
+              stroke="oklch(0.55 0.08 25 / 0.55)"
+              strokeWidth={0.65}
+              strokeDasharray="0.8 0.6"
               strokeLinecap="round"
               strokeLinejoin="round"
             >
-              <animate attributeName="stroke-dashoffset" from="0" to="-22" dur="4s" repeatCount="indefinite" />
+              <animate attributeName="stroke-dashoffset" from="0" to="-28" dur="4s" repeatCount="indefinite" />
             </path>
+            {/* Glow beneath route path for depth */}
+            <path
+              d={ROUTE_PATH_D}
+              fill="none"
+              stroke="oklch(0.55 0.08 25 / 0.15)"
+              strokeWidth={1.6}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
 
             {/* Entrance marker */}
             <g>
@@ -418,6 +427,31 @@ function MapPage() {
               );
             })}
 
+            {/* Legend — bottom strip, below the toys zone (which ends at y=94) */}
+            <g transform="translate(22, 95)">
+              <rect x={0} y={0} width={56} height={3.5} rx={1.2} fill="oklch(1 0 0 / 0.7)" stroke="oklch(0.5 0.02 260 / 0.12)" strokeWidth={0.15} />
+              <text x={3} y={2.5} fontSize={1.8} fill="oklch(0.45 0.02 260)" fontFamily="Nunito, sans-serif" fontWeight={600}>
+                {lang === "bm" ? "Legenda" : "Legend"}
+              </text>
+              {CATEGORY_ORDER.map((cat, i) => {
+                const meta = CATEGORY_META[cat];
+                const sx = 12 + i * 9;
+                return (
+                  <g
+                    key={cat}
+                    onMouseEnter={() => setHoveredZone(cat)}
+                    onMouseLeave={() => setHoveredZone(null)}
+                    style={{ cursor: "default" }}
+                  >
+                    <circle cx={sx} cy={1.75} r={0.8} fill={meta.color} />
+                    <text x={sx + 1.4} y={2.4} fontSize={1.6} fill="oklch(0.4 0.02 260)" fontFamily="Nunito, sans-serif" fontWeight={500}>
+                      {meta.emoji}
+                    </text>
+                  </g>
+                );
+              })}
+            </g>
+
             {/* Compass rose — top right */}
             <g transform="translate(91, 6)">
               <circle cx={0} cy={0} r={3.5} fill="oklch(1 0 0 / 0.6)" stroke="oklch(0.5 0.02 260 / 0.2)" strokeWidth={0.2} />
@@ -433,32 +467,7 @@ function MapPage() {
 
         </div>
 
-        {/* Legend strip — below the map, not floating over it */}
-        <div className="mt-2 flex flex-wrap items-center justify-center gap-x-4 gap-y-0.5 rounded-xl border border-border/60 bg-card/80 px-3 py-2 text-[11px]">
-          <span className="flex items-center gap-1.5 font-semibold text-muted-foreground">
-            <Compass className="size-3" />
-            {lang === "bm" ? "Legenda" : "Legend"}
-          </span>
-          <span className="h-3 w-px bg-border/60" />
-          {CATEGORY_ORDER.map((cat) => {
-            const meta = CATEGORY_META[cat];
-            return (
-              <span
-                key={cat}
-                className="flex cursor-default items-center gap-1 font-medium"
-                style={{ color: meta.color }}
-                onMouseEnter={() => setHoveredZone(cat)}
-                onMouseLeave={() => setHoveredZone(null)}
-              >
-                <span
-                  className="inline-block size-2.5 rounded-full"
-                  style={{ background: meta.color }}
-                />
-                {meta.emoji}
-              </span>
-            );
-          })}
-        </div>
+        {/* Legend is now inside the SVG map above */}
 
         {extraArtifacts.length > 0 && (
           <div className="mt-3 rounded-xl border-2 border-dashed border-border bg-accent/20 p-4">
