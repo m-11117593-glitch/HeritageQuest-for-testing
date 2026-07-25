@@ -173,12 +173,87 @@ function MapPage() {
     setSelected(a);
   }
 
-  const extraArtifacts = useMemo(() =>
-    artifacts.filter((a) => !PIN_POSITIONS[a.id]),
-    [artifacts]
+  // Custom categories (not in the original 5)
+  const customCatEntries = useMemo(
+    () => categoryEntries.filter(({ isKnown }) => !isKnown),
+    [categoryEntries]
   );
 
-  const allDone = totalScanned === TOTAL_ARTIFACTS;
+  // Dynamic zone positions for custom categories (below toys zone)
+  const dynamicZoneLayout = useMemo(() => {
+    const layout: Record<string, { x: number; y: number; w: number; h: number }> = {};
+    const startY = 88;
+    const zoneH = 5;
+    const gap = 0.5;
+    customCatEntries.forEach(({ cat }, i) => {
+      const col = i % 2;
+      const row = Math.floor(i / 2);
+      layout[cat] = {
+        x: col === 0 ? 4 : 50,
+        y: startY + row * (zoneH + gap),
+        w: 46,
+        h: zoneH,
+      };
+    });
+    return layout;
+  }, [customCatEntries]);
+
+  // Auto-generated pin positions inside each custom zone
+  const dynamicPinPositions = useMemo(() => {
+    const pos: Record<string, { x: number; y: number }> = {};
+    customCatEntries.forEach(({ cat }) => {
+      const zone = dynamicZoneLayout[cat];
+      if (!zone) return;
+      const items = artifacts.filter((a) => a.category === cat);
+      const total = items.length;
+      const cols = Math.min(total, 4);
+      const spacing = zone.w / (cols + 1);
+      items.forEach((a, i) => {
+        pos[a.id] = {
+          x: zone.x + spacing * (i % cols + 1),
+          y: zone.y + 3.5,
+        };
+      });
+    });
+    return pos;
+  }, [customCatEntries, dynamicZoneLayout, artifacts]);
+
+  // Combined pin lookup
+  const allPinPositions = useMemo(() => ({ ...PIN_POSITIONS, ...dynamicPinPositions }), [dynamicPinPositions]);
+
+  // Combined zone rects (known with toys shrunk + custom categories)
+  const allZoneRects = useMemo(() => {
+    const zones: {
+      cat: string;
+      meta: ReturnType<typeof categoryMeta>;
+      z: { x: number; y: number; w: number; h: number; label_bm?: string; label_en?: string };
+      isKnown: boolean;
+    }[] = [];
+    for (const cat of CATEGORY_ORDER) {
+      const src = ZONE_LAYOUT[cat];
+      zones.push({
+        cat,
+        meta: CATEGORY_META[cat],
+        z: cat === 'toys' ? { ...src, h: 22 } : src,
+        isKnown: true,
+      });
+    }
+    for (const { cat } of customCatEntries) {
+      const dz = dynamicZoneLayout[cat];
+      if (!dz) continue;
+      zones.push({
+        cat,
+        meta: categoryMeta(cat),
+        z: dz,
+        isKnown: false,
+      });
+    }
+    return zones;
+  }, [customCatEntries, dynamicZoneLayout]);
+
+  const artifactCount = artifacts.length;
+  const pctTotal = Math.round((totalScanned / Math.max(artifactCount, TOTAL_ARTIFACTS)) * 100);
+  const allDone = totalScanned >= artifactCount;
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
@@ -194,7 +269,7 @@ function MapPage() {
           <div className="text-right">
             <p className="font-display text-2xl text-primary">
               {totalScanned}
-              <span className="text-sm text-muted-foreground">/{TOTAL_ARTIFACTS}</span>
+              <span className="text-sm text-muted-foreground">/{artifactCount}</span>
             </p>
             <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
               {t("discovered_count")}
@@ -204,7 +279,7 @@ function MapPage() {
         <div className="mb-2 h-2 overflow-hidden rounded-full border border-border bg-muted">
           <div
             className="h-full rounded-full bg-gradient-to-r from-primary to-gold transition-[width] duration-500 ease-out"
-            style={{ width: `${pct}%` }}
+            style={{ width: `${pctTotal}%` }}
           />
         </div>
 
@@ -219,10 +294,7 @@ function MapPage() {
             </defs>
             <rect width="100" height="100" fill="url(#map-grid)" />
 
-            {/* Zone areas */}
-            {CATEGORY_ORDER.map((cat) => {
-              const z = ZONE_LAYOUT[cat];
-              const meta = CATEGORY_META[cat];
+            {allZoneRects.map(({ cat, meta, z, isKnown }) => {
               const items = artifacts.filter((a) => a.category === cat);
               const done = items.filter((a) => scannedSet.has(a.id)).length;
               const zonePct = items.length ? done / items.length : 0;
@@ -259,11 +331,11 @@ function MapPage() {
                     fillOpacity={isHovered ? 0.15 : 0.08}
                     style={{ transition: "fill-opacity 200ms ease" }}
                   />
-                  {/* Zone label */}
+                  {/* Zone label — use raw cat name for custom zones */}
                   <text
                     x={z.x + z.w / 2}
                     y={z.y + 5}
-                    fontSize={2.4}
+                    fontSize={isKnown ? 2.4 : 1.8}
                     textAnchor="middle"
                     fill={meta.color}
                     fontFamily="Fredoka, sans-serif"
@@ -271,7 +343,9 @@ function MapPage() {
                     opacity={isHovered ? 1 : 0.8}
                     style={{ transition: "opacity 200ms ease" }}
                   >
-                    {lang === "bm" ? z.label_bm : z.label_en}
+                    {isKnown
+                      ? (lang === "bm" ? (z.label_bm ?? cat) : (z.label_en ?? cat))
+                      : `${meta.emoji} ${cat}`}
                   </text>
                   {/* Zone progress count */}
                   <text
@@ -328,12 +402,12 @@ function MapPage() {
               </text>
             </g>
 
-            {/* Artifact pins */}
+            {/* Artifact pins — use allPinPositions (known + dynamic) */}
             {artifacts.map((a) => {
-              const p = PIN_POSITIONS[a.id];
+              const p = allPinPositions[a.id];
               if (!p) return null;
               const isScanned = scannedSet.has(a.id);
-              const meta = CATEGORY_META[a.category as CategoryKey] ?? { emoji: "📦", color: "oklch(0.55 0.04 260)", bg: "oklch(0.94 0.02 260)" };
+              const meta = categoryMeta(a.category);
               const pulsing = pulseId === a.id;
               const name = lang === "bm" ? a.name_bm : a.name_en;
               const routeNum = ROUTE_INDEX[a.id] ?? null;
@@ -427,14 +501,14 @@ function MapPage() {
               );
             })}
 
-            {/* Legend — top-left area, above the zone areas (zones start at y=4) */}
+            {/* Legend — all categories (known + custom) */}
             <g transform="translate(3, 1)">
-              <rect x={0} y={0} width={48} height={2.6} rx={1.2} fill="oklch(1 0 0 / 0.7)" stroke="oklch(0.5 0.02 260 / 0.12)" strokeWidth={0.15} />
+              <rect x={0} y={0} width={Math.min(48 + customCatEntries.length * 4, 65)} height={2.6} rx={1.2} fill="oklch(1 0 0 / 0.7)" stroke="oklch(0.5 0.02 260 / 0.12)" strokeWidth={0.15} />
               <text x={3} y={1.9} fontSize={1.6} fill="oklch(0.45 0.02 260)" fontFamily="Nunito, sans-serif" fontWeight={600}>
                 {lang === "bm" ? "Legenda" : "Legend"}
               </text>
-              {CATEGORY_ORDER.map((cat, i) => {
-                const meta = CATEGORY_META[cat];
+              {categoryEntries.map(({ cat }, i) => {
+                const meta = categoryMeta(cat);
                 const sx = 11 + i * 7.5;
                 return (
                   <g
@@ -469,45 +543,12 @@ function MapPage() {
 
         {/* Legend is now inside the SVG map above */}
 
-        {extraArtifacts.length > 0 && (
-          <div className="mt-3 rounded-xl border-2 border-dashed border-border bg-accent/20 p-4">
-            <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              <MapPin className="size-3.5" />
-              {lang === "bm" ? "Artifak Tambahan" : "Additional Artifacts"}
-              <span className="chip">{extraArtifacts.length}</span>
-            </div>
-            <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
-              {extraArtifacts.map((a) => {
-                const done = scannedSet.has(a.id);
-                const meta = categoryMeta(a.category);
-                const imageUrl = artifactImageUrl(a.id, a.image_url);
-                return (
-                  <button
-                    key={a.id}
-                    type="button"
-                    onClick={() => openArtifact(a)}
-                    disabled={!done}
-                    className="group flex flex-col items-center gap-1 rounded-xl p-1.5 transition-all duration-200 hover:bg-accent/40 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                    title={done ? (lang === "bm" ? a.name_bm : a.name_en) : "???"}
-                  >
-                    <div
-                      className="grid size-10 place-items-center overflow-hidden rounded-lg border-2 bg-white/50"
-                      style={{ borderColor: meta.color }}
-                    >
-                      {done && imageUrl ? (
-                        <img src={imageUrl} alt="" className="size-full object-contain p-0.5" loading="lazy" />
-                      ) : (
-                        <Lock className="size-4 text-muted-foreground" />
-                      )}
-                    </div>
-                    <span className="max-w-full truncate text-[9px] font-medium text-muted-foreground group-hover:text-ink">
-                      {done ? (lang === "bm" ? a.name_bm : a.name_en) : "???"}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+        {customCatEntries.length > 0 && (
+          <p className="mt-2 text-center text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+            {lang === "bm"
+              ? `${customCatEntries.length} kategori tambahan dipaparkan di bahagian bawah peta`
+              : `${customCatEntries.length} additional category sections shown below the map`}
+          </p>
         )}
         <p className="mt-3 text-xs text-muted-foreground">{t("scan_hint")}</p>
 
