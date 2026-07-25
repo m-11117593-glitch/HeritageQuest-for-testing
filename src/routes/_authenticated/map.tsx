@@ -173,83 +173,58 @@ function MapPage() {
     setSelected(a);
   }
 
-  // Custom categories (not in the original 5)
-  const customCatEntries = useMemo(
-    () => categoryEntries.filter(({ isKnown }) => !isKnown),
-    [categoryEntries]
-  );
+  // All zone rects — dynamically sized with equal height regardless of category count
+  const allZoneRects = useMemo(() => {
+    const cats = categoryEntries.map(({ cat }) => cat);
+    const total = cats.length;
+    const rows = Math.ceil(total / 2);
+    const gap = 4;
+    const topPad = 4;
+    const availH = 100 - topPad - 2; // leave 2 at bottom
+    const zoneH = Math.floor((availH - (rows - 1) * gap) / rows);
 
-  // Dynamic zone positions for custom categories (below toys zone)
-  const dynamicZoneLayout = useMemo(() => {
-    const layout: Record<string, { x: number; y: number; w: number; h: number }> = {};
-    const startY = 88;
-    const zoneH = 5;
-    const gap = 0.5;
-    customCatEntries.forEach(({ cat }, i) => {
-      const col = i % 2;
+    return cats.map((cat, i) => {
       const row = Math.floor(i / 2);
-      layout[cat] = {
-        x: col === 0 ? 4 : 50,
-        y: startY + row * (zoneH + gap),
-        w: 46,
-        h: zoneH,
+      const col = i % 2;
+      const isLastOdd = total % 2 !== 0 && i === total - 1;
+      const x = isLastOdd ? 4 : 4 + col * 48;
+      const w = isLastOdd ? 92 : 46;
+      const y = topPad + row * (zoneH + gap);
+      const meta = cat in CATEGORY_META ? CATEGORY_META[cat as CategoryKey] : categoryMeta(cat);
+      const isKnown = cat in CATEGORY_META;
+      const knownSrc = isKnown ? ZONE_LAYOUT[cat as CategoryKey] : null;
+      return {
+        cat,
+        meta,
+        z: { x, y, w, h: zoneH, label_bm: knownSrc?.label_bm, label_en: knownSrc?.label_en },
+        isKnown,
       };
     });
-    return layout;
-  }, [customCatEntries]);
+  }, [categoryEntries]);
 
-  // Auto-generated pin positions inside each custom zone
+  // Auto-generated pin positions inside custom zones (artifacts without PIN_POSITIONS)
   const dynamicPinPositions = useMemo(() => {
     const pos: Record<string, { x: number; y: number }> = {};
-    customCatEntries.forEach(({ cat }) => {
-      const zone = dynamicZoneLayout[cat];
-      if (!zone) return;
-      const items = artifacts.filter((a) => a.category === cat);
+    const customZones = allZoneRects.filter((r) => !r.isKnown);
+    for (const zone of customZones) {
+      const items = artifacts.filter((a) => a.category === zone.cat);
       const total = items.length;
+      if (!total) continue;
       const cols = Math.min(total, 4);
-      const spacing = zone.w / (cols + 1);
+      const spacing = zone.z.w / (cols + 1);
+      const cy = zone.z.y + zone.z.h / 2; // vertically centered
       items.forEach((a, i) => {
         pos[a.id] = {
-          x: zone.x + spacing * (i % cols + 1),
-          y: zone.y + 3.5,
+          x: zone.z.x + spacing * (i % cols + 1),
+          y: cy,
         };
       });
-    });
+    }
     return pos;
-  }, [customCatEntries, dynamicZoneLayout, artifacts]);
+  }, [allZoneRects, artifacts]);
 
-  // Combined pin lookup
+  // Combined pin lookup (known positions + dynamic)
   const allPinPositions = useMemo(() => ({ ...PIN_POSITIONS, ...dynamicPinPositions }), [dynamicPinPositions]);
-
-  // Combined zone rects (known with toys shrunk + custom categories)
-  const allZoneRects = useMemo(() => {
-    const zones: {
-      cat: string;
-      meta: ReturnType<typeof categoryMeta>;
-      z: { x: number; y: number; w: number; h: number; label_bm?: string; label_en?: string };
-      isKnown: boolean;
-    }[] = [];
-    for (const cat of CATEGORY_ORDER) {
-      const src = ZONE_LAYOUT[cat];
-      zones.push({
-        cat,
-        meta: CATEGORY_META[cat],
-        z: cat === 'toys' ? { ...src, h: 22 } : src,
-        isKnown: true,
-      });
-    }
-    for (const { cat } of customCatEntries) {
-      const dz = dynamicZoneLayout[cat];
-      if (!dz) continue;
-      zones.push({
-        cat,
-        meta: categoryMeta(cat),
-        z: dz,
-        isKnown: false,
-      });
-    }
-    return zones;
-  }, [customCatEntries, dynamicZoneLayout]);
 
   const artifactCount = artifacts.length;
   const pctTotal = Math.round((totalScanned / Math.max(artifactCount, TOTAL_ARTIFACTS)) * 100);
@@ -503,7 +478,7 @@ function MapPage() {
 
             {/* Legend — all categories (known + custom) */}
             <g transform="translate(3, 1)">
-              <rect x={0} y={0} width={Math.min(48 + customCatEntries.length * 4, 65)} height={2.6} rx={1.2} fill="oklch(1 0 0 / 0.7)" stroke="oklch(0.5 0.02 260 / 0.12)" strokeWidth={0.15} />
+              <rect x={0} y={0} width={Math.min(48 + (categoryEntries.length - 5) * 4, 65)} height={2.6} rx={1.2} fill="oklch(1 0 0 / 0.7)" stroke="oklch(0.5 0.02 260 / 0.12)" strokeWidth={0.15} />
               <text x={3} y={1.9} fontSize={1.6} fill="oklch(0.45 0.02 260)" fontFamily="Nunito, sans-serif" fontWeight={600}>
                 {lang === "bm" ? "Legenda" : "Legend"}
               </text>
@@ -543,13 +518,7 @@ function MapPage() {
 
         {/* Legend is now inside the SVG map above */}
 
-        {customCatEntries.length > 0 && (
-          <p className="mt-2 text-center text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-            {lang === "bm"
-              ? `${customCatEntries.length} kategori tambahan dipaparkan di bahagian bawah peta`
-              : `${customCatEntries.length} additional category sections shown below the map`}
-          </p>
-        )}
+        {/* No separate section needed — all zones are equally sized */}
         <p className="mt-3 text-xs text-muted-foreground">{t("scan_hint")}</p>
 
         {lockedNote && (
