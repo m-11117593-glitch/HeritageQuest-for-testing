@@ -427,15 +427,15 @@ function MapPage() {
               );
             })}
 
-            {/* Legend — bottom strip, below the toys zone (which ends at y=94) */}
-            <g transform="translate(22, 95)">
-              <rect x={0} y={0} width={56} height={3.5} rx={1.2} fill="oklch(1 0 0 / 0.7)" stroke="oklch(0.5 0.02 260 / 0.12)" strokeWidth={0.15} />
-              <text x={3} y={2.5} fontSize={1.8} fill="oklch(0.45 0.02 260)" fontFamily="Nunito, sans-serif" fontWeight={600}>
+            {/* Legend — top-left area, above the zone areas (zones start at y=4) */}
+            <g transform="translate(3, 1)">
+              <rect x={0} y={0} width={48} height={2.6} rx={1.2} fill="oklch(1 0 0 / 0.7)" stroke="oklch(0.5 0.02 260 / 0.12)" strokeWidth={0.15} />
+              <text x={3} y={1.9} fontSize={1.6} fill="oklch(0.45 0.02 260)" fontFamily="Nunito, sans-serif" fontWeight={600}>
                 {lang === "bm" ? "Legenda" : "Legend"}
               </text>
               {CATEGORY_ORDER.map((cat, i) => {
                 const meta = CATEGORY_META[cat];
-                const sx = 12 + i * 9;
+                const sx = 11 + i * 7.5;
                 return (
                   <g
                     key={cat}
@@ -443,8 +443,8 @@ function MapPage() {
                     onMouseLeave={() => setHoveredZone(null)}
                     style={{ cursor: "default" }}
                   >
-                    <circle cx={sx} cy={1.75} r={0.8} fill={meta.color} />
-                    <text x={sx + 1.4} y={2.4} fontSize={1.6} fill="oklch(0.4 0.02 260)" fontFamily="Nunito, sans-serif" fontWeight={500}>
+                    <circle cx={sx} cy={1.3} r={0.65} fill={meta.color} />
+                    <text x={sx + 1.1} y={1.85} fontSize={1.3} fill="oklch(0.4 0.02 260)" fontFamily="Nunito, sans-serif" fontWeight={500}>
                       {meta.emoji}
                     </text>
                   </g>
