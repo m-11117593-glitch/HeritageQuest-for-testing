@@ -130,14 +130,14 @@ function MapPage() {
   }, [artifacts]);
 
   // Generate fallback meta for custom categories
-  function categoryMeta(cat: string): { emoji: string; color: string; bg: string } {
+  function categoryMeta(cat: string, customIndex?: number): { emoji: string; color: string; bg: string } {
     if (cat in CATEGORY_META) {
       return CATEGORY_META[cat as CategoryKey];
     }
-    // Deterministic fallback based on category name hash
-    const hash = cat.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-    const hues = [25, 60, 265, 165, 330, 200, 30, 280, 80, 340];
-    const hue = hues[hash % hues.length];
+    // Reserve hues well-separated from known ones (known: 25, 60, 165, 265, 330)
+    const reserveHues = [95, 200, 140, 300, 240, 310, 110, 230, 350, 80, 175, 285];
+    const idx = typeof customIndex === 'number' ? customIndex : cat.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
+    const hue = reserveHues[idx % reserveHues.length];
     return {
       emoji: "📦",
       color: `oklch(0.55 0.10 ${hue})`,
@@ -215,7 +215,7 @@ function MapPage() {
       const y = startY + row * (zoneH + gap);
       zones.push({
         cat,
-        meta: categoryMeta(cat),
+        meta: categoryMeta(cat, i),
         z: { x, y, w, h: zoneH },
         isKnown: false,
       });
@@ -247,6 +247,13 @@ function MapPage() {
 
   // Combined pin lookup (known positions + dynamic)
   const allPinPositions = useMemo(() => ({ ...PIN_POSITIONS, ...dynamicPinPositions }), [dynamicPinPositions]);
+
+  // Quick map from category → meta, so pins use the same colors as their zone
+  const categoryMetaMap = useMemo(() => {
+    const m = new Map<string, ReturnType<typeof categoryMeta>>();
+    for (const zr of allZoneRects) m.set(zr.cat, zr.meta);
+    return m;
+  }, [allZoneRects]);
 
   const artifactCount = artifacts.length;
   const pctTotal = Math.round((totalScanned / Math.max(artifactCount, TOTAL_ARTIFACTS)) * 100);
@@ -328,11 +335,11 @@ function MapPage() {
                     fillOpacity={isHovered ? 0.15 : 0.08}
                     style={{ transition: "fill-opacity 200ms ease" }}
                   />
-                  {/* Zone label — use raw cat name for custom zones */}
+                  {/* Zone label — same font size for all */}
                   <text
                     x={z.x + z.w / 2}
-                    y={z.y + 5}
-                    fontSize={isKnown ? 2.4 : 1.8}
+                    y={z.y + (z.h < 10 ? 3 : 5)}
+                    fontSize={2.4}
                     textAnchor="middle"
                     fill={meta.color}
                     fontFamily="Fredoka, sans-serif"
@@ -361,27 +368,47 @@ function MapPage() {
               );
             })}
 
-            {/* Suggested route path — bolder + animated dash */}
-            <path
-              d={ROUTE_PATH_D}
-              fill="none"
-              stroke="oklch(0.55 0.08 25 / 0.55)"
-              strokeWidth={0.65}
-              strokeDasharray="0.8 0.6"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <animate attributeName="stroke-dashoffset" from="0" to="-28" dur="4s" repeatCount="indefinite" />
-            </path>
-            {/* Glow beneath route path for depth */}
-            <path
-              d={ROUTE_PATH_D}
-              fill="none"
-              stroke="oklch(0.55 0.08 25 / 0.15)"
-              strokeWidth={1.6}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
+            {/* Dynamically compute route path + extension to custom zones */}
+            {(() => {
+              const customZonesBelow = allZoneRects.filter((r) => !r.isKnown).map((r) => r.z);
+              const extD = customZonesBelow.length > 0
+                ? (() => {
+                    const lastRouteId = ROUTE_ORDER[ROUTE_ORDER.length - 1];
+                    const lastPin = PIN_POSITIONS[lastRouteId];
+                    if (!lastPin) return '';
+                    // Connect to center of first custom zone
+                    const firstCustom = customZonesBelow[0];
+                    const cx = firstCustom.x + firstCustom.w / 2;
+                    const cy = firstCustom.y + firstCustom.h / 2;
+                    return ` M ${lastPin.x} ${lastPin.y} L ${cx} ${cy}`;
+                  })()
+                : '';
+              const fullD = ROUTE_PATH_D + extD;
+              return (
+                <>
+                  <path
+                    d={fullD}
+                    fill="none"
+                    stroke="oklch(0.55 0.08 25 / 0.55)"
+                    strokeWidth={0.65}
+                    strokeDasharray="0.8 0.6"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <animate attributeName="stroke-dashoffset" from="0" to="-28" dur="4s" repeatCount="indefinite" />
+                  </path>
+                  {/* Glow beneath route path for depth */}
+                  <path
+                    d={fullD}
+                    fill="none"
+                    stroke="oklch(0.55 0.08 25 / 0.15)"
+                    strokeWidth={1.6}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </>
+              );
+            })()}
 
             {/* Entrance marker */}
             <g>
@@ -404,7 +431,7 @@ function MapPage() {
               const p = allPinPositions[a.id];
               if (!p) return null;
               const isScanned = scannedSet.has(a.id);
-              const meta = categoryMeta(a.category);
+              const meta = categoryMetaMap.get(a.category) ?? categoryMeta(a.category);
               const pulsing = pulseId === a.id;
               const name = lang === "bm" ? a.name_bm : a.name_en;
               const routeNum = ROUTE_INDEX[a.id] ?? null;
