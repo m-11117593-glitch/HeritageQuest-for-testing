@@ -28,11 +28,28 @@ async function fetchQuests() {
     supabase.from("user_unique_quests").select("*").eq("user_id", uid ?? ""),
   ]);
   const doneSet = new Set((done ?? []).map((q) => q.quest_id));
-  const scannedSet = new Set((scanned ?? []).map((s) => s.artifact_id));
-  const byCat: Record<string, string[]> = {};
+  const scannedSet = new Set((scanned ?? []).map((s) => s.artifact_id));    const byCat: Record<string, string[]> = {};
   for (const a of artifacts ?? []) (byCat[a.category] ??= []).push(a.id);
   const uqByTmpl = new Map((userUq ?? []).map((u) => [u.template_id, u]));
-  return { quests: quests ?? [], doneSet, scannedSet, byCat, uqTmpls: uqTmpls ?? [], uqByTmpl };
+
+  // Dynamically generate quests for categories that have artifacts but no quest entry
+  const existingCatQuests = new Set((quests ?? []).filter((q) => q.type === "category").map((q) => q.category));
+  const dynamicQuests = Object.entries(byCat)
+    .filter(([cat]) => !existingCatQuests.has(cat))
+    .map(([cat, ids]) => ({
+      id: `quest-${cat}`,
+      category: cat,
+      type: "category",
+      name_bm: `Koleksi ${cat}`,
+      name_en: `${cat.charAt(0).toUpperCase() + cat.slice(1)} Collection`,
+      description_bm: `Imbas semua artifak dalam kategori ${cat} untuk menamatkan kuest ini.`,
+      description_en: `Scan all artifacts in the ${cat} category to complete this quest.`,
+      exp_reward: 50,
+      sort_order: 99,
+      created_at: new Date().toISOString(),
+    }));
+
+  return { quests: [...(quests ?? []), ...dynamicQuests], doneSet, scannedSet, byCat, uqTmpls: uqTmpls ?? [], uqByTmpl };
 }
 
 function QuestsPage() {

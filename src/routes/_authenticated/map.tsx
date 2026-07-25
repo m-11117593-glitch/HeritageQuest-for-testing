@@ -173,6 +173,11 @@ function MapPage() {
     setSelected(a);
   }
 
+  const extraArtifacts = useMemo(() =>
+    artifacts.filter((a) => !PIN_POSITIONS[a.id]),
+    [artifacts]
+  );
+
   const allDone = totalScanned === TOTAL_ARTIFACTS;
 
   return (
@@ -455,14 +460,47 @@ function MapPage() {
           })}
         </div>
 
-        {artifacts.length > ROUTE_ORDER.length && (
-          <p className="mt-3 text-xs text-muted-foreground">
-            {lang === "bm"
-              ? `💡 ${artifacts.length - ROUTE_ORDER.length} artifak tambahan tidak dipaparkan di atas pelan lantai. Lihat senarai di sebelah.`
-              : `💡 ${artifacts.length - ROUTE_ORDER.length} additional artifacts not shown on the floorplan. See the list on the right.`}
-          </p>
+        {extraArtifacts.length > 0 && (
+          <div className="mt-3 rounded-xl border-2 border-dashed border-border bg-accent/20 p-4">
+            <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <MapPin className="size-3.5" />
+              {lang === "bm" ? "Artifak Tambahan" : "Additional Artifacts"}
+              <span className="chip">{extraArtifacts.length}</span>
+            </div>
+            <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
+              {extraArtifacts.map((a) => {
+                const done = scannedSet.has(a.id);
+                const meta = categoryMeta(a.category);
+                const imageUrl = artifactImageUrl(a.id, a.image_url);
+                return (
+                  <button
+                    key={a.id}
+                    type="button"
+                    onClick={() => openArtifact(a)}
+                    disabled={!done}
+                    className="group flex flex-col items-center gap-1 rounded-xl p-1.5 transition-all duration-200 hover:bg-accent/40 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                    title={done ? (lang === "bm" ? a.name_bm : a.name_en) : "???"}
+                  >
+                    <div
+                      className="grid size-10 place-items-center overflow-hidden rounded-lg border-2 bg-white/50"
+                      style={{ borderColor: meta.color }}
+                    >
+                      {done && imageUrl ? (
+                        <img src={imageUrl} alt="" className="size-full object-contain p-0.5" loading="lazy" />
+                      ) : (
+                        <Lock className="size-4 text-muted-foreground" />
+                      )}
+                    </div>
+                    <span className="max-w-full truncate text-[9px] font-medium text-muted-foreground group-hover:text-ink">
+                      {done ? (lang === "bm" ? a.name_bm : a.name_en) : "???"}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         )}
-        <p className="mt-1 text-xs text-muted-foreground">{t("scan_hint")}</p>
+        <p className="mt-3 text-xs text-muted-foreground">{t("scan_hint")}</p>
 
         {lockedNote && (
           <p className="mt-2 rounded-2xl border-2 border-border bg-muted/50 px-4 py-2 text-xs text-muted-foreground shake">
