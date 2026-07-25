@@ -173,8 +173,8 @@ function MapPage() {
     setSelected(a);
   }
 
-  // Zone rects: known categories use original ZONE_LAYOUT (pins are placed for those),
-  // custom categories get dynamic zones below the toys zone
+  // Zone rects: known categories use original ZONE_LAYOUT unchanged.
+  // When custom categories exist, toys splits into left half — custom goes right half of same row.
   const customCatNames = useMemo(
     () => categoryEntries.filter(({ isKnown }) => !isKnown).map(({ cat }) => cat),
     [categoryEntries]
@@ -188,35 +188,37 @@ function MapPage() {
       isKnown: boolean;
     }[] = [];
 
-    // 1) Known categories — original ZONE_LAYOUT, toys shrunk to h:22
+    // 1) Known categories — original ZONE_LAYOUT
     for (const cat of CATEGORY_ORDER) {
       const src = ZONE_LAYOUT[cat];
+      const isToys = cat === 'toys';
+      const hasCustom = customCatNames.length > 0;
       zones.push({
         cat,
         meta: CATEGORY_META[cat],
-        z: cat === 'toys'
-          ? { x: src.x, y: src.y, w: src.w, h: 22, label_bm: src.label_bm, label_en: src.label_en }
+        z: isToys && hasCustom
+          ? { x: src.x, y: src.y, w: 46, h: src.h, label_bm: src.label_bm, label_en: src.label_en }
           : { x: src.x, y: src.y, w: src.w, h: src.h, label_bm: src.label_bm, label_en: src.label_en },
         isKnown: true,
       });
     }
 
-    // 2) Custom categories — stacked below toys (toys ends at y:64+22=86, start at y:88)
-    const startY = 88;
-    const maxY = 99;
+    // 2) Custom categories — in the right half of the toys row (y:64, h:30)
+    const toysSrc = ZONE_LAYOUT['toys'];
     const n = customCatNames.length;
     const gap = 0.5;
-    const zoneH = n > 0 ? Math.floor(((maxY - startY) - (n - 1) * gap) / n) : 0;
+    // Use toys' original height (30) split among N categories
+    const zoneH = n > 0 ? Math.floor((toysSrc.h - (n - 1) * gap) / n) : 0;
     customCatNames.forEach((cat, i) => {
-      const col = i % 2;
-      const row = Math.floor(i / 2);
-      const x = col === 0 ? 4 : 50;
-      const w = col === 0 ? 46 : 46;
-      const y = startY + row * (zoneH + gap);
       zones.push({
         cat,
         meta: categoryMeta(cat, i),
-        z: { x, y, w, h: zoneH },
+        z: {
+          x: 50,
+          y: toysSrc.y + i * (zoneH + gap),
+          w: 46,
+          h: zoneH,
+        },
         isKnown: false,
       });
     });
@@ -246,7 +248,28 @@ function MapPage() {
   }, [allZoneRects, artifacts]);
 
   // Combined pin lookup (known positions + dynamic)
-  const allPinPositions = useMemo(() => ({ ...PIN_POSITIONS, ...dynamicPinPositions }), [dynamicPinPositions]);
+  // When toys is split (custom categories exist), override toys pins that would fall outside
+  const allPinPositions = useMemo(() => {
+    const isSplit = customCatNames.length > 0;
+    const pos = { ...PIN_POSITIONS };
+    if (isSplit) {
+      // Reposition toys artifacts within the left half (x:4–x:50)
+      pos['diabolo-cina'] = { x: 27, y: 80 };
+      pos['catur-cina'] = { x: 37, y: 80 };
+    }
+    return { ...pos, ...dynamicPinPositions };
+  }, [dynamicPinPositions, customCatNames.length]);
+
+  // Dynamic route path — recomputed when overridden pin positions change
+  const dynamicRoutePathD = useMemo(() => {
+    const points = ROUTE_ORDER.map((id) => allPinPositions[id]).filter(Boolean);
+    if (!points.length) return '';
+    let d = `M ${ENTRANCE_POSITION.x} ${ENTRANCE_POSITION.y}`;
+    for (const p of points) {
+      d += ` L ${p.x} ${p.y}`;
+    }
+    return d;
+  }, [allPinPositions]);
 
   // Quick map from category → meta, so pins use the same colors as their zone
   const categoryMetaMap = useMemo(() => {
@@ -383,7 +406,7 @@ function MapPage() {
                     return ` M ${lastPin.x} ${lastPin.y} L ${cx} ${cy}`;
                   })()
                 : '';
-              const fullD = ROUTE_PATH_D + extD;
+              const fullD = dynamicRoutePathD + extD;
               return (
                 <>
                   <path
