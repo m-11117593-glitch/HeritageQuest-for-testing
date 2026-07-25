@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState, useRef } from "react";
 import { ArrowLeft, Upload, Save, Loader2, Trash2, AlertTriangle, HelpCircle, Languages, X } from "lucide-react";
+
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
 import { updateArtifact, uploadArtifactImage, deleteArtifact, translateText } from "@/lib/admin.functions";
@@ -37,6 +38,7 @@ function EditArtifactPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [showLanguages, setShowLanguages] = useState(false);
+  const [bmValidationFailed, setBmValidationFailed] = useState(false);
   const [translating, setTranslating] = useState(false);
   const [translationError, setTranslationError] = useState<string | null>(null);
   const [translationDone, setTranslationDone] = useState(false);
@@ -131,6 +133,11 @@ function EditArtifactPage() {
     });
   }
 
+  function closeLanguages() {
+    setShowLanguages(false);
+    setBmValidationFailed(false);
+  }
+
   async function handleTranslateAll() {
     if (translating) return;
     setTranslating(true);
@@ -182,8 +189,9 @@ function EditArtifactPage() {
 
     // Validate BM fields are filled (required but hidden in main form)
     if (!nameBm.trim() || !eraBm.trim() || !originBm.trim() || !materialBm.trim() || !descBm.trim()) {
-      setError('Please fill in BM fields via the Languages button before saving.');
-
+      setError(t("admin_validate_bm"));
+      setBmValidationFailed(true);
+      setShowLanguages(true);
       setSaving(false);
       return;
     }
@@ -407,7 +415,7 @@ function EditArtifactPage() {
       {/* Languages modal */}
       {showLanguages && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowLanguages(false)} />
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={closeLanguages} />
           <div className="relative w-full max-w-2xl rounded-2xl border-2 border-border bg-card p-6 shadow-xl animate-in zoom-in-95 fade-in duration-200 max-h-[90vh] overflow-y-auto">
             <div className="mb-6 flex items-start justify-between">
               <div>
@@ -418,6 +426,11 @@ function EditArtifactPage() {
                 <p className="text-sm text-muted-foreground mt-1">
                   View and edit both Bahasa Melayu and English side by side.
                 </p>
+                {bmValidationFailed && (
+                  <p className="mt-2 text-xs font-medium text-destructive flex items-center gap-1">
+                    <AlertTriangle className="size-3.5" /> {t("admin_validate_bm")}
+                  </p>
+                )}
               </div>
               <button
                 type="button"
@@ -461,7 +474,9 @@ function EditArtifactPage() {
               <div className="grid gap-3 sm:grid-cols-2">
                 <div>
                   <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-indigo">BM</label>
-                  <input value={nameBm} onChange={(e) => setNameBm(e.target.value)} className="w-full rounded-xl border-2 border-border bg-background px-4 py-2.5 text-sm outline-none focus:border-primary/50" />
+                  <input value={nameBm} onChange={(e) => setNameBm(e.target.value)} className={`w-full rounded-xl border-2 bg-background px-4 py-2.5 text-sm outline-none focus:border-primary/50 ${
+                    bmValidationFailed && !nameBm.trim() ? "border-destructive/50" : "border-border"
+                  }`} />
                 </div>
                 <div>
                   <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-jungle">EN</label>
@@ -473,7 +488,9 @@ function EditArtifactPage() {
               <div className="grid gap-3 sm:grid-cols-2">
                 <div>
                   <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-indigo">Era (BM)</label>
-                  <input value={eraBm} onChange={(e) => setEraBm(e.target.value)} className="w-full rounded-xl border-2 border-border bg-background px-4 py-2.5 text-sm outline-none focus:border-primary/50" />
+                  <input value={eraBm} onChange={(e) => setEraBm(e.target.value)} className={`w-full rounded-xl border-2 bg-background px-4 py-2.5 text-sm outline-none focus:border-primary/50 ${
+                    bmValidationFailed && !eraBm.trim() ? "border-destructive/50" : "border-border"
+                  }`} />
                 </div>
                 <div>
                   <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-jungle">Era (EN)</label>
@@ -485,7 +502,9 @@ function EditArtifactPage() {
               <div className="grid gap-3 sm:grid-cols-2">
                 <div>
                   <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-indigo">Origin (BM)</label>
-                  <input value={originBm} onChange={(e) => setOriginBm(e.target.value)} className="w-full rounded-xl border-2 border-border bg-background px-4 py-2.5 text-sm outline-none focus:border-primary/50" />
+                  <input value={originBm} onChange={(e) => setOriginBm(e.target.value)} className={`w-full rounded-xl border-2 bg-background px-4 py-2.5 text-sm outline-none focus:border-primary/50 ${
+                    bmValidationFailed && !originBm.trim() ? "border-destructive/50" : "border-border"
+                  }`} />
                 </div>
                 <div>
                   <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-jungle">Origin (EN)</label>
@@ -497,7 +516,9 @@ function EditArtifactPage() {
               <div className="grid gap-3 sm:grid-cols-2">
                 <div>
                   <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-indigo">Material (BM)</label>
-                  <input value={materialBm} onChange={(e) => setMaterialBm(e.target.value)} className="w-full rounded-xl border-2 border-border bg-background px-4 py-2.5 text-sm outline-none focus:border-primary/50" />
+                  <input value={materialBm} onChange={(e) => setMaterialBm(e.target.value)} className={`w-full rounded-xl border-2 bg-background px-4 py-2.5 text-sm outline-none focus:border-primary/50 ${
+                    bmValidationFailed && !materialBm.trim() ? "border-destructive/50" : "border-border"
+                  }`} />
                 </div>
                 <div>
                   <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-jungle">Material (EN)</label>
@@ -509,7 +530,9 @@ function EditArtifactPage() {
               <div className="grid gap-3 sm:grid-cols-2">
                 <div>
                   <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-indigo">Description (BM)</label>
-                  <textarea value={descBm} onChange={(e) => setDescBm(e.target.value)} rows={4} className="w-full rounded-xl border-2 border-border bg-background px-4 py-2.5 text-sm outline-none focus:border-primary/50 resize-y" />
+                  <textarea value={descBm} onChange={(e) => setDescBm(e.target.value)} rows={4} className={`w-full rounded-xl border-2 bg-background px-4 py-2.5 text-sm outline-none focus:border-primary/50 resize-y ${
+                    bmValidationFailed && !descBm.trim() ? "border-destructive/50" : "border-border"
+                  }`} />
                 </div>
                 <div>
                   <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-jungle">Description (EN)</label>
@@ -521,7 +544,7 @@ function EditArtifactPage() {
             <div className="mt-6 flex items-center justify-end gap-3 border-t border-border pt-4">
               <button
                 type="button"
-                onClick={() => setShowLanguages(false)}
+                onClick={closeLanguages}
                 className="rounded-xl border-2 border-border px-5 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:text-ink"
               >
                 Close
