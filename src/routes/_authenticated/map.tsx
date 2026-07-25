@@ -266,17 +266,17 @@ function MapPage() {
     return d;
   }, [allPinPositions]);
 
-  // Extend the route path to the first custom zone (continuous L, no M — avoids SVG dash reset)
+  // Extend the route path to the first custom artifact pin (continuous L, no M — avoids SVG dash reset)
   const fullRoutePathD = useMemo(() => {
     if (!dynamicRoutePathD || customCatNames.length === 0) return dynamicRoutePathD;
-    const lastRouteId = ROUTE_ORDER[ROUTE_ORDER.length - 1];
-    const lastPin = allPinPositions[lastRouteId];
-    const firstCustomZone = allZoneRects.find((r) => !r.isKnown);
-    if (!lastPin || !firstCustomZone) return dynamicRoutePathD;
-    const cx = firstCustomZone.z.x + firstCustomZone.z.w / 2;
-    const cy = firstCustomZone.z.y + firstCustomZone.z.h / 2;
-    return dynamicRoutePathD + ` L ${cx} ${cy}`;
-  }, [dynamicRoutePathD, customCatNames, allZoneRects, allPinPositions]);
+    const firstCustomArtifact = artifacts
+      .filter((a) => customCatNames.includes(a.category))
+      .sort((a, b) => a.sort_order - b.sort_order)[0];
+    if (!firstCustomArtifact) return dynamicRoutePathD;
+    const firstPin = allPinPositions[firstCustomArtifact.id];
+    if (!firstPin) return dynamicRoutePathD;
+    return dynamicRoutePathD + ` L ${firstPin.x} ${firstPin.y}`;
+  }, [dynamicRoutePathD, customCatNames, allPinPositions, artifacts]);
 
   // Quick map from category → meta, so pins use the same colors as their zone
   const categoryMetaMap = useMemo(() => {
