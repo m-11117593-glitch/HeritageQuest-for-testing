@@ -173,36 +173,58 @@ function MapPage() {
     setSelected(a);
   }
 
-  // All zone rects — dynamically sized with equal height regardless of category count
+  // Zone rects: known categories use original ZONE_LAYOUT (pins are placed for those),
+  // custom categories get dynamic zones below the toys zone
+  const customCatNames = useMemo(
+    () => categoryEntries.filter(({ isKnown }) => !isKnown).map(({ cat }) => cat),
+    [categoryEntries]
+  );
+
   const allZoneRects = useMemo(() => {
-    const cats = categoryEntries.map(({ cat }) => cat);
-    const total = cats.length;
-    const rows = Math.ceil(total / 2);
-    const gap = 4;
-    const topPad = 4;
-    const availH = 100 - topPad - 2; // leave 2 at bottom
-    const zoneH = Math.floor((availH - (rows - 1) * gap) / rows);
+    const zones: {
+      cat: string;
+      meta: ReturnType<typeof categoryMeta>;
+      z: { x: number; y: number; w: number; h: number; label_bm?: string; label_en?: string };
+      isKnown: boolean;
+    }[] = [];
 
-    return cats.map((cat, i) => {
-      const row = Math.floor(i / 2);
-      const col = i % 2;
-      const isLastOdd = total % 2 !== 0 && i === total - 1;
-      const x = isLastOdd ? 4 : 4 + col * 48;
-      const w = isLastOdd ? 92 : 46;
-      const y = topPad + row * (zoneH + gap);
-      const meta = cat in CATEGORY_META ? CATEGORY_META[cat as CategoryKey] : categoryMeta(cat);
-      const isKnown = cat in CATEGORY_META;
-      const knownSrc = isKnown ? ZONE_LAYOUT[cat as CategoryKey] : null;
-      return {
+    // 1) Known categories — original ZONE_LAYOUT, toys shrunk to h:22
+    for (const cat of CATEGORY_ORDER) {
+      const src = ZONE_LAYOUT[cat];
+      zones.push({
         cat,
-        meta,
-        z: { x, y, w, h: zoneH, label_bm: knownSrc?.label_bm, label_en: knownSrc?.label_en },
-        isKnown,
-      };
-    });
-  }, [categoryEntries]);
+        meta: CATEGORY_META[cat],
+        z: cat === 'toys'
+          ? { x: src.x, y: src.y, w: src.w, h: 22, label_bm: src.label_bm, label_en: src.label_en }
+          : { x: src.x, y: src.y, w: src.w, h: src.h, label_bm: src.label_bm, label_en: src.label_en },
+        isKnown: true,
+      });
+    }
 
-  // Auto-generated pin positions inside custom zones (artifacts without PIN_POSITIONS)
+    // 2) Custom categories — stacked below toys (toys ends at y:64+22=86, start at y:88)
+    const startY = 88;
+    const maxY = 99;
+    const n = customCatNames.length;
+    const gap = 0.5;
+    const zoneH = n > 0 ? Math.floor(((maxY - startY) - (n - 1) * gap) / n) : 0;
+    customCatNames.forEach((cat, i) => {
+      const col = i % 2;
+      const row = Math.floor(i / 2);
+      const x = col === 0 ? 4 : 50;
+      const w = col === 0 ? 46 : 46;
+      const y = startY + row * (zoneH + gap);
+      zones.push({
+        cat,
+        meta: categoryMeta(cat),
+        z: { x, y, w, h: zoneH },
+        isKnown: false,
+      });
+    });
+
+    return zones;
+  }, [customCatNames]);
+
+  // Auto-generated pin positions inside custom zones
   const dynamicPinPositions = useMemo(() => {
     const pos: Record<string, { x: number; y: number }> = {};
     const customZones = allZoneRects.filter((r) => !r.isKnown);
@@ -212,7 +234,7 @@ function MapPage() {
       if (!total) continue;
       const cols = Math.min(total, 4);
       const spacing = zone.z.w / (cols + 1);
-      const cy = zone.z.y + zone.z.h / 2; // vertically centered
+      const cy = zone.z.y + zone.z.h / 2;
       items.forEach((a, i) => {
         pos[a.id] = {
           x: zone.z.x + spacing * (i % cols + 1),
