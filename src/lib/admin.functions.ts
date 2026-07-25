@@ -267,26 +267,52 @@ export const deleteQuizQuestion = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-// ── Translate Text (EN → BM) via MyMemory API ──
+// ── Translate Text (EN → BM) ──
+// Primary: MyMemory (with email param for 50k chars/day)
+// Fallback: LibreTranslate public instance
+
+async function translateViaMyMemory(text: string): Promise<string | null> {
+  const encoded = encodeURIComponent(text);
+  const url = `https://api.mymemory.translated.net/get?q=${encoded}&langpair=en|ms&de=deebakrameshbabu7593@gmail.com`;
+  const response = await fetch(url);
+  if (response.status === 429) return null; // rate limited, try fallback
+  if (!response.ok) return null;
+  const result = await response.json();
+  return result.responseData?.translatedText ?? null;
+}
+
+async function translateViaLibreTranslate(text: string): Promise<string | null> {
+  const url = "https://libretranslate.com/translate";
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ q: text, source: "en", target: "ms", format: "text" }),
+    });
+    if (!response.ok) return null;
+    const result = await response.json();
+    return result?.translatedText ?? null;
+  } catch {
+    return null;
+  }
+}
 
 export const translateText = createServerFn({ method: "GET" })
   .inputValidator((d) => z.object({ text: z.string().min(1) }).parse(d))
   .handler(async ({ data }) => {
-    const encoded = encodeURIComponent(data.text);
-    // MyMemory anonymous: 5000 chars/day. Supports Malay (ms).
-    const url = `https://api.mymemory.translated.net/get?q=${encoded}&langpair=en|ms`;
-
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error(`Translation failed: ${response.status}`);
+    // Try MyMemory first (email param gives 50k chars/day)
+    let translated = await translateViaMyMemory(data.text);
+    
+    // Fall back to LibreTranslate if MyMemory rate-limited or failed
+    if (!translated) {
+      translated = await translateViaLibreTranslate(data.text);
     }
 
-    const result = await response.json();
-    if (!result.responseData?.translatedText) {
-      throw new Error("Translation returned empty result");
+    if (!translated) {
+      throw new Error("Translation services are currently unavailable. Please try again later or fill in BM fields manually.");
     }
 
-    return { ok: true, translatedText: result.responseData.translatedText };
+    return { ok: true, translatedText: translated };
   });
 
 // ── Category CRUD ──

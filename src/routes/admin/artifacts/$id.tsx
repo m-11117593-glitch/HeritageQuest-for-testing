@@ -287,8 +287,8 @@ function EditArtifactPage() {
         {/* Category */}
         <div>
           <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("admin_category")}</label>
-          <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full rounded-xl border-2 border-border bg-background px-4 py-2.5 text-sm outline-none focus:border-primary/50">
-            {categories.length === 0 && <option value="">{t("admin_loading")}</option>}
+          <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full rounded-xl border-2 border-border bg-background px-4 py-2.5 text-sm outline-none focus:border-primary/50" required>
+            <option value="" disabled>{categories.length === 0 ? t("admin_loading") : t("admin_select_category")}</option>
             {categories.map((c: any) => <option key={c.id} value={c.id}>{c.icon} {lang === "bm" ? c.name_bm : c.name_en}</option>)}
           </select>
         </div>

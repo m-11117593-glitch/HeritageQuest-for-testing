@@ -256,8 +256,9 @@ function AddArtifactPage() {
             value={category}
             onChange={(e) => setCategory(e.target.value)}
             className="w-full rounded-xl border-2 border-border bg-background px-4 py-2.5 text-sm outline-none transition-colors focus:border-primary/50"
+            required
           >
-            {categories.length === 0 && <option value="">{t("admin_loading")}</option>}
+            <option value="" disabled>{categories.length === 0 ? t("admin_loading") : t("admin_select_category")}</option>
             {categories.map((c: any) => (
               <option key={c.id} value={c.id}>{c.icon} {lang === "bm" ? c.name_bm : c.name_en}</option>
             ))}
