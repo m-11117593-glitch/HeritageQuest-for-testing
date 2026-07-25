@@ -266,16 +266,20 @@ function MapPage() {
     return d;
   }, [allPinPositions]);
 
-  // Extend the route path to the first custom artifact pin (continuous L, no M — avoids SVG dash reset)
+  // Extend the route path through ALL custom artifacts in the first custom zone (continuous L, no M)
   const fullRoutePathD = useMemo(() => {
     if (!dynamicRoutePathD || customCatNames.length === 0) return dynamicRoutePathD;
-    const firstCustomArtifact = artifacts
-      .filter((a) => customCatNames.includes(a.category))
-      .sort((a, b) => a.sort_order - b.sort_order)[0];
-    if (!firstCustomArtifact) return dynamicRoutePathD;
-    const firstPin = allPinPositions[firstCustomArtifact.id];
-    if (!firstPin) return dynamicRoutePathD;
-    return dynamicRoutePathD + ` L ${firstPin.x} ${firstPin.y}`;
+    const firstCustomCat = customCatNames[0];
+    const customArtifacts = artifacts
+      .filter((a) => a.category === firstCustomCat)
+      .sort((a, b) => a.sort_order - b.sort_order);
+    if (!customArtifacts.length) return dynamicRoutePathD;
+    let d = dynamicRoutePathD;
+    for (const a of customArtifacts) {
+      const p = allPinPositions[a.id];
+      if (p) d += ` L ${p.x} ${p.y}`;
+    }
+    return d;
   }, [dynamicRoutePathD, customCatNames, allPinPositions, artifacts]);
 
   // Quick map from category → meta, so pins use the same colors as their zone
