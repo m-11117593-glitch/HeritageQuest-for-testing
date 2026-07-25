@@ -16,7 +16,7 @@ import {
   HelpCircle,
   ArrowLeft,
 } from "lucide-react";
-import { useI18n } from "@/lib/i18n";
+import { useI18n, STRINGS, type StringKey } from "@/lib/i18n";
 import { artifactImageUrl } from "@/lib/artifact-images";
 import { CATEGORY_META, type CategoryKey } from "@/lib/museum";
 import type { ScanResult } from "@/lib/museum.functions";
@@ -171,7 +171,7 @@ export function ArtifactModal({ result, onClose }: Props) {
                   className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 font-mono text-[10px] uppercase tracking-[0.18em]"
                   style={{ borderColor: meta.color, color: meta.color }}
                 >
-                  {meta.emoji} {t(`category_${cat}` as never)}
+                  {meta.emoji} {`category_${cat}` in STRINGS ? t(`category_${cat}` as StringKey) : cat}
                 </span>
               </div>
               <DialogTitle className="pr-8 text-2xl font-semibold tracking-tight">{name}</DialogTitle>
