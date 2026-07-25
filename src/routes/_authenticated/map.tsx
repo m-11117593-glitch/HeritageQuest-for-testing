@@ -386,44 +386,27 @@ function MapPage() {
               );
             })}
 
-            {/* Dynamically compute route path + extension to custom zones */}
-            {(() => {
-              const customZonesBelow = allZoneRects.filter((r) => !r.isKnown).map((r) => r.z);
-              const extD = customZonesBelow.length > 0
-                ? (() => {
-                    if (!dynamicRoutePathD) return '';
-                    const firstCustom = customZonesBelow[0];
-                    const cx = firstCustom.x + firstCustom.w / 2;
-                    const cy = firstCustom.y + firstCustom.h / 2;
-                    return ` L ${cx} ${cy}`; // continuous line — no M to avoid dash reset
-                  })()
-                : '';
-              const fullD = dynamicRoutePathD + extD;
-              return (
-                <>
-                  <path
-                    d={fullD}
-                    fill="none"
-                    stroke="oklch(0.55 0.08 25 / 0.55)"
-                    strokeWidth={0.65}
-                    strokeDasharray="0.8 0.6"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <animate attributeName="stroke-dashoffset" from="0" to="-28" dur="4s" repeatCount="indefinite" />
-                  </path>
-                  {/* Glow beneath route path for depth */}
-                  <path
-                    d={fullD}
-                    fill="none"
-                    stroke="oklch(0.55 0.08 25 / 0.15)"
-                    strokeWidth={1.6}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </>
-              );
-            })()}
+            {/* Suggested route path — connects the 15 numbered artifacts */}
+            <path
+              d={dynamicRoutePathD}
+              fill="none"
+              stroke="oklch(0.55 0.08 25 / 0.55)"
+              strokeWidth={0.65}
+              strokeDasharray="0.8 0.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <animate attributeName="stroke-dashoffset" from="0" to="-28" dur="4s" repeatCount="indefinite" />
+            </path>
+            {/* Glow beneath route path for depth */}
+            <path
+              d={dynamicRoutePathD}
+              fill="none"
+              stroke="oklch(0.55 0.08 25 / 0.15)"
+              strokeWidth={1.6}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
 
             {/* Entrance marker */}
             <g>
