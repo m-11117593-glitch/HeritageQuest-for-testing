@@ -74,7 +74,7 @@ export function ArtifactModal({ result, onClose }: Props) {
 
   const a = localResult.artifact;
   const cat = a.category as CategoryKey;
-  const meta = CATEGORY_META[cat];
+  const meta = CATEGORY_META[cat] ?? { emoji: "📦", color: "oklch(0.55 0.04 260)", bg: "oklch(0.94 0.02 260)" };
 
   const name = lang === "bm" ? a.name_bm : a.name_en;
   const desc = lang === "bm" ? a.description_bm : a.description_en;

@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 
 export type Lang = "bm" | "en";
 
-const STRINGS = {
+export const STRINGS = {
   appName: { bm: "HeritageQuest", en: "HeritageQuest" },
   tagline: { bm: "Warisan Terungkai", en: "Heritage Unfolded" },
   museum: { bm: "Koleksi Warisan", en: "The Collection" },

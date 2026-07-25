@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useState, useEffect } from "react";
 import { ArrowLeft, Check, Sparkles, Flag, Award, TrendingUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useI18n } from "@/lib/i18n";
+import { useI18n, STRINGS, type StringKey } from "@/lib/i18n";
 import { artifactImageUrl } from "@/lib/artifact-images";
 import { scanArtifact, type ScanResult } from "@/lib/museum.functions";
 import { sfx } from "@/lib/sfx";
@@ -102,7 +102,7 @@ function ArtifactPage() {
             <span>№ {artifact.sort_order.toString().padStart(3, "0")}</span>
           </div>
           <p className={`mt-6 text-base font-semibold uppercase tracking-[0.3em] ${hardMode ? "text-cyan-400 hm-cyan-glow" : "text-primary"}`}>
-            {t(`category_${artifact.category}` as never)}
+            {`category_${artifact.category}` in STRINGS ? t(`category_${artifact.category}` as StringKey) : artifact.category}
           </p>
           <h1 className={`mt-2 font-display text-4xl leading-tight ${hardMode ? "text-zinc-800" : "text-ink"}`}>{name}</h1>
         </div>

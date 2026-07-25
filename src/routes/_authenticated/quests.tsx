@@ -72,8 +72,8 @@ function QuestsPage() {
               const status = state?.status ?? "active";
               const completed = status === "completed";
               const cat = tmpl.target_category as CategoryKey;
-              const meta = CATEGORY_META[cat];
-              const zoneLabel = lang === "bm" ? ZONE_LAYOUT[cat].label_bm : ZONE_LAYOUT[cat].label_en;
+              const meta = CATEGORY_META[cat] ?? { emoji: "📦", color: "oklch(0.55 0.04 260)", bg: "oklch(0.94 0.02 260)" };
+              const zoneLabel = ZONE_LAYOUT[cat] ? (lang === "bm" ? ZONE_LAYOUT[cat].label_bm : ZONE_LAYOUT[cat].label_en) : cat;
               const badgeText =
                 status === "completed"
                   ? t("quest_completed")
