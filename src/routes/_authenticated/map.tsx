@@ -266,6 +266,18 @@ function MapPage() {
     return d;
   }, [allPinPositions]);
 
+  // Extend the route path to the first custom zone (continuous L, no M — avoids SVG dash reset)
+  const fullRoutePathD = useMemo(() => {
+    if (!dynamicRoutePathD || customCatNames.length === 0) return dynamicRoutePathD;
+    const lastRouteId = ROUTE_ORDER[ROUTE_ORDER.length - 1];
+    const lastPin = allPinPositions[lastRouteId];
+    const firstCustomZone = allZoneRects.find((r) => !r.isKnown);
+    if (!lastPin || !firstCustomZone) return dynamicRoutePathD;
+    const cx = firstCustomZone.z.x + firstCustomZone.z.w / 2;
+    const cy = firstCustomZone.z.y + firstCustomZone.z.h / 2;
+    return dynamicRoutePathD + ` L ${cx} ${cy}`;
+  }, [dynamicRoutePathD, customCatNames, allZoneRects, allPinPositions]);
+
   // Quick map from category → meta, so pins use the same colors as their zone
   const categoryMetaMap = useMemo(() => {
     const m = new Map<string, ReturnType<typeof categoryMeta>>();
@@ -386,9 +398,9 @@ function MapPage() {
               );
             })}
 
-            {/* Suggested route path — connects the 15 numbered artifacts */}
+            {/* Suggested route path — extends to custom zones via continuous L (no sub-path) */}
             <path
-              d={dynamicRoutePathD}
+              d={fullRoutePathD || dynamicRoutePathD}
               fill="none"
               stroke="oklch(0.55 0.08 25 / 0.55)"
               strokeWidth={0.65}
@@ -396,11 +408,13 @@ function MapPage() {
               strokeLinecap="round"
               strokeLinejoin="round"
             >
-              <animate attributeName="stroke-dashoffset" from="0" to="-28" dur="4s" repeatCount="indefinite" />
+              {fullRoutePathD && (
+                <animate attributeName="stroke-dashoffset" from="0" to="-28" dur="4s" repeatCount="indefinite" />
+              )}
             </path>
             {/* Glow beneath route path for depth */}
             <path
-              d={dynamicRoutePathD}
+              d={fullRoutePathD || dynamicRoutePathD}
               fill="none"
               stroke="oklch(0.55 0.08 25 / 0.15)"
               strokeWidth={1.6}
