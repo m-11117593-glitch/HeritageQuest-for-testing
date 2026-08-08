@@ -235,8 +235,8 @@ bunx wrangler deploy
 You'll see output like:
 
 ```
-Uploaded maxajie-zxcvb (XX files)
-Deployed maxajie-zxcvb triggers
+Uploaded v2 (XX files)
+Deployed v2 triggers
   https://your-worker.your-subdomain.workers.dev
 ```
 
@@ -287,7 +287,7 @@ To use your own domain (e.g. `heritagequest.my`) instead of the `*.workers.dev` 
 ### 10.1 Add Domain to Cloudflare
 
 1. Go to **Cloudflare Dashboard → Workers & Pages**
-2. Click on your worker (`maxajie-zxcvb`)
+2. Click on your worker (`v2`)
 3. Go to **Triggers** → **Custom Domains**
 4. Click **"Add custom domain"**
 5. Enter your domain (e.g. `heritagequest.my`)

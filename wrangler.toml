@@ -6,7 +6,7 @@
 # Then deploy (either form works):
 #   npx wrangler deploy
 #   npx wrangler deploy --config .output/server/wrangler.json
-name = "maxajie-zxcvb"
+name = "v2"
 compatibility_date = "2024-11-06"
 account_id = "427805553c3b64604de391e49f0b0348"
 compatibility_flags = ["nodejs_compat"]
