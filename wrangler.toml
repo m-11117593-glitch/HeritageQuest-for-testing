@@ -1,9 +1,23 @@
 # Cloudflare Worker configuration.
 # Publishable Supabase values are safe to commit (public/anon).
+#
+# This app is TanStack Start SSR. It MUST be built first:
+#   bun run build
+# Then deploy (either form works):
+#   npx wrangler deploy
+#   npx wrangler deploy --config .output/server/wrangler.json
 name = "maxajie-zxcvb"
 compatibility_date = "2024-11-06"
 account_id = "427805553c3b64604de391e49f0b0348"
 compatibility_flags = ["nodejs_compat"]
+
+# Nitro build output entry point (produced by `bun run build`)
+main = ".output/server/index.mjs"
+no_bundle = true
+
+[assets]
+binding = "ASSETS"
+directory = ".output/public"
 
 [vars]
 SUPABASE_URL = "https://lyehlfgqclrxinyzfpao.supabase.co"
