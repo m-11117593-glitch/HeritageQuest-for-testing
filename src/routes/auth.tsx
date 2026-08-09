@@ -71,7 +71,8 @@ function AuthPage() {
         }
         const { data, error } = await supabase.auth.signUp({
           email, password,
-          options: { data: { username: username || email.split("@")[0] }, emailRedirectTo: window.location.origin },
+          // Always redirect post-verification to the live site, never localhost.
+          options: { data: { username: username || email.split("@")[0] }, emailRedirectTo: "https://v2.lxviidev.workers.dev" },
         });
         if (error) throw error;
         if (!data.session) {
