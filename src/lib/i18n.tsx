@@ -60,6 +60,7 @@ export const STRINGS = {
   auth_confirm_email_title: { bm: "📬 Sila sahkan e-mel anda", en: "📬 Please confirm your email" },
   auth_confirm_email_body: { bm: "Kami telah menghantar e-mel pengesahan ke {email}. Sila semak peti masuk (dan folder spam) anda, klik pautan pengesahan, kemudian log masuk di sini.", en: "We sent a confirmation email to {email}. Please check your inbox (and spam folder), click the confirmation link, then come back here to sign in." },
   auth_or: { bm: "atau", en: "or" },
+  auth_google: { bm: "Sambung dengan Google", en: "Continue with Google" },
   auth_hide_password: { bm: "Sembunyikan kata laluan", en: "Hide password" },
   auth_show_password: { bm: "Tunjukkan kata laluan", en: "Show password" },
   auth_forgot: { bm: "Lupa kata laluan?", en: "Forgot password?" },
