@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate, Outlet, useRouter } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { Award, Gift, Scroll, ArrowRight, Coins, MapPin, Trophy, Users } from "lucide-react";
+import { Award, Gift, Scroll, ArrowRight, Coins, MapPin, Trophy, Users, Trash2, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
 import { ExpBar } from "@/components/ExpBar";
@@ -10,6 +10,17 @@ import { resolveAchievementIcon } from "@/lib/utils";
 import { TOTAL_ARTIFACTS, expToNextLevel, type Rarity } from "@/lib/museum";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { Dialog, DialogContent, DialogClose } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
 import { sfx } from "@/lib/sfx";
 
 export const Route = createFileRoute("/_authenticated/profile")({
@@ -104,6 +115,22 @@ function ProfilePage() {
   const router = useRouter();
   const { data } = useQuery({ queryKey: ["profile"], queryFn: fetchProfile });
   const [selectedBadge, setSelectedBadge] = useState<any | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  async function deleteAccount() {
+    setDeleting(true); setDeleteError(null);
+    try {
+      const { error } = await supabase.rpc("delete_user");
+      if (error) throw error;
+      await supabase.auth.signOut({ scope: "local" });
+      navigate({ to: "/auth", replace: true });
+    } catch (e) {
+      console.error("delete account failed", e);
+      setDeleteError(t("delete_account_error"));
+      setDeleting(false);
+    }
+  }
 
   // Detect if a child route (profile/$userId) is active
   const hasChildRoute = router.state.matches.some(
@@ -436,6 +463,46 @@ function ProfilePage() {
               })}
             </div>
           )}
+        </section>
+
+        {/* ─── Danger zone: delete account ─── */}
+        <section className="game-card p-5 animate-in fade-in slide-in-from-bottom-4 duration-500" style={{ animationDelay: "300ms" }}>
+          <div className="mb-2 flex items-center gap-2">
+            <Trash2 className="size-4 text-destructive" />
+            <h2 className="font-display text-lg text-destructive">{t("delete_account")}</h2>
+          </div>
+          <p className="text-sm text-muted-foreground">{t("delete_account_confirm_desc")}</p>
+
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <button
+                type="button"
+                disabled={deleting}
+                className="mt-4 inline-flex items-center gap-2 rounded-full border-2 border-destructive/40 bg-destructive/10 px-5 py-2 text-sm font-semibold text-destructive transition-colors hover:bg-destructive/20 disabled:opacity-60"
+              >
+                {deleting ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
+                {deleting ? t("delete_account_deleting") : t("delete_account")}
+              </button>
+            </AlertDialogTrigger>
+            <AlertDialogContent className="max-w-md">
+              <AlertDialogHeader>
+                <AlertDialogTitle>{t("delete_account_confirm_title")}</AlertDialogTitle>
+                <AlertDialogDescription>{t("delete_account_confirm_desc")}</AlertDialogDescription>
+              </AlertDialogHeader>
+              {deleteError && <p className="text-sm text-destructive">{deleteError}</p>}
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={deleting}>{t("close")}</AlertDialogCancel>
+                <AlertDialogAction
+                  disabled={deleting}
+                  onClick={(e) => { e.preventDefault(); void deleteAccount(); }}
+                  className="bg-destructive text-white hover:bg-destructive/90"
+                >
+                  {deleting ? <Loader2 className="mr-2 size-4 animate-spin" /> : <Trash2 className="mr-2 size-4" />}
+                  {t("delete_account_confirm_btn")}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </section>
 
         {/* Badge detail dialog */}

@@ -5,6 +5,7 @@ import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { useI18n } from "@/lib/i18n";
 import { LanguageToggle } from "@/components/LanguageToggle";
+import type { User } from "@supabase/supabase-js";
 
 // Post-verification / post-reset links always land on the live site, never localhost.
 const APP_URL = "https://v2.lxviidev.workers.dev";
@@ -38,7 +39,7 @@ function AuthPage() {
   const { t, lang } = useI18n();
   const navigate = useNavigate();
   const { redirect } = useSearch({ from: "/auth" });
-  const [mode, setMode] = useState<"signin" | "signup" | "forgot" | "recovery">("signin");
+  const [mode, setMode] = useState<"signin" | "signup" | "forgot" | "recovery" | "onboard">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -77,33 +78,54 @@ function AuthPage() {
       return;
     }
 
-    let resolved = false;
-    const goHome = () => {
-      if (resolved) return;
-      resolved = true;
-      // Drop the one-time OAuth code from the URL so refresh/back can't replay it.
+    // Drop the one-time OAuth code from the URL so refresh/back can't replay it.
+    const cleanOAuthUrl = () => {
       if (window.history.replaceState) {
         const clean = window.location.pathname + window.location.search.replace(/[?&]code=[^&]*/, "").replace(/^&/, "?");
         window.history.replaceState({}, "", clean || "/auth");
       }
+    };
+
+    let resolved = false;
+    const goHome = () => {
+      if (resolved) return;
+      resolved = true;
+      cleanOAuthUrl();
       navigate({ to: redirect ?? "/map" });
     };
 
+    // First-time Google users (no password, auto-created username) must pick a
+    // username and set a password before entering the app.
+    const handleUser = (user: User | null) => {
+      if (!user) return;
+      const isGoogle =
+        user.app_metadata?.provider === "google" ||
+        (user.app_metadata?.providers as string[] | undefined)?.includes("google");
+      if (isGoogle && !user.user_metadata?.onboarded) {
+        cleanOAuthUrl();
+        setMode("onboard");
+        setUsername(user.user_metadata?.username ?? user.email?.split("@")[0] ?? "");
+        return;
+      }
+      goHome();
+    };
+
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
-      if (isOAuthReturn && event === "SIGNED_IN") goHome();
+      if (isOAuthReturn && event === "SIGNED_IN") {
+        supabase.auth.getUser().then(({ data }) => handleUser(data.user));
+      }
     });
 
-    supabase.auth.getUser().then(({ data }) => {
-      if (data.user) goHome();
-    });
+    supabase.auth.getUser().then(({ data }) => handleUser(data.user));
 
     return () => sub.subscription.unsubscribe();
   }, [navigate, redirect, lang]);
 
   const strength = useMemo(() => scorePassword(password), [password]);
-  const confirmMismatch = (mode === "signup" || mode === "recovery") && confirmPassword.length > 0 && password !== confirmPassword;
+  const confirmMismatch = (mode === "signup" || mode === "recovery" || mode === "onboard") && confirmPassword.length > 0 && password !== confirmPassword;
   const canSignup = mode === "signup" && strength.level === 3 && password === confirmPassword;
   const canReset = mode === "recovery" && strength.level === 3 && password === confirmPassword;
+  const canOnboard = mode === "onboard" && username.trim().length > 0 && strength.level === 3 && password === confirmPassword;
 
   async function signInWithGoogle() {
     setBusy(true); clearMessages();
@@ -169,6 +191,33 @@ function AuthPage() {
         if (error) throw error;
         navigate({ to: redirect ?? "/map" });
         return;
+      } else if (mode === "onboard") {
+        const name = username.trim();
+        if (strength.level !== 3) {
+          throw new Error(
+            lang === "bm"
+              ? "Kata laluan mesti mencapai tahap Kuat (hijau) sebelum meneruskan."
+              : "Password must reach Strong (green) before continuing.",
+          );
+        }
+        if (password !== confirmPassword) {
+          throw new Error(lang === "bm" ? "Pengesahan kata laluan tidak sepadan." : "Password confirmation does not match.");
+        }
+        if (!name) {
+          throw new Error(lang === "bm" ? "Sila pilih nama pengembara." : "Please choose an explorer name.");
+        }
+        const { error } = await supabase.auth.updateUser({
+          password,
+          data: { username: name, onboarded: true },
+        });
+        if (error) throw error;
+        const { data: u } = await supabase.auth.getUser();
+        if (u.user) {
+          const { error: pErr } = await supabase.from("profiles").update({ username: name }).eq("id", u.user.id);
+          if (pErr) throw pErr;
+        }
+        navigate({ to: redirect ?? "/map" });
+        return;
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
@@ -177,6 +226,11 @@ function AuthPage() {
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed");
     } finally { setBusy(false); }
+  }
+
+  async function handleOnboardSignOut() {
+    try { await supabase.auth.signOut(); } catch { /* session may be gone */ }
+    navigate({ to: "/auth", replace: true });
   }
 
   const strengthLabel = lang === "bm" ? strength.labelBm : strength.labelEn;
@@ -191,19 +245,19 @@ function AuthPage() {
       <main className="mx-auto grid min-h-[80vh] max-w-md place-items-center px-6">
         <div className="paper-card w-full p-8 pop-in">
           <p className="text-xs uppercase tracking-[0.3em] text-primary">{t("tagline")}</p>
-          <h1 className="mt-2 font-display text-3xl">{mode === "recovery" ? t("auth_reset_title") : t("auth_welcome")}</h1>
+          <h1 className="mt-2 font-display text-3xl">{mode === "recovery" ? t("auth_reset_title") : mode === "onboard" ? t("auth_onboard_title") : t("auth_welcome")}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {mode === "forgot" ? t("auth_forgot_sub") : mode === "recovery" ? t("auth_reset_sub") : t("auth_sub")}
+            {mode === "forgot" ? t("auth_forgot_sub") : mode === "recovery" ? t("auth_reset_sub") : mode === "onboard" ? t("auth_onboard_sub") : t("auth_sub")}
           </p>
 
           <form onSubmit={submit} className="mt-6 space-y-4">
-            {mode === "signup" && (
+            {(mode === "signup" || mode === "onboard") && (
               <label className="block text-sm">
                 <span className="mb-1 block text-xs font-medium uppercase tracking-wider text-muted-foreground">{t("username")}</span>
                 <input value={username} onChange={(e) => setUsername(e.target.value)} className="w-full rounded-md border border-input bg-background px-3 py-2 outline-none focus:border-ring" />
               </label>
             )}
-            {mode !== "recovery" && (
+            {mode !== "recovery" && mode !== "onboard" && (
               <label className="block text-sm">
                 <span className="mb-1 block text-xs font-medium uppercase tracking-wider text-muted-foreground">{t("email")}</span>
                 <input type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full rounded-md border border-input bg-background px-3 py-2 outline-none focus:border-ring" />
@@ -246,7 +300,7 @@ function AuthPage() {
               </label>
             )}
 
-            {(mode === "signup" || mode === "recovery") && (
+            {(mode === "signup" || mode === "recovery" || mode === "onboard") && (
               <>
                 <div>
                   <div className="flex h-1.5 gap-1 overflow-hidden rounded-full bg-muted">
@@ -314,47 +368,58 @@ function AuthPage() {
               </div>
             )}
             <button
-              disabled={busy || (mode === "signup" && !canSignup) || (mode === "recovery" && !canReset)}
+              disabled={busy || (mode === "signup" && !canSignup) || (mode === "recovery" && !canReset) || (mode === "onboard" && !canOnboard)}
               type="submit"
               className="bounce-soft w-full rounded-full bg-primary py-3 font-semibold text-primary-foreground disabled:opacity-60"
             >
-              {busy ? "…" : mode === "signin" ? t("signin") : mode === "forgot" ? t("auth_send_reset") : mode === "recovery" ? t("auth_reset_btn") : t("signup")}
+              {busy ? "…" : mode === "signin" ? t("signin") : mode === "forgot" ? t("auth_send_reset") : mode === "recovery" ? t("auth_reset_btn") : mode === "onboard" ? t("auth_onboard_btn") : t("signup")}
             </button>
-            {(mode === "signup" || mode === "recovery") && !(mode === "signup" ? canSignup : canReset) && password.length > 0 && (
+            {(mode === "signup" || mode === "recovery" || mode === "onboard") && !(mode === "signup" ? canSignup : mode === "recovery" ? canReset : canOnboard) && password.length > 0 && (
               <p className="text-center text-[11px] text-muted-foreground">
-                {mode === "recovery" ? t("auth_reset_hint") : t("auth_signup_hint")}
+                {mode === "recovery" ? t("auth_reset_hint") : mode === "onboard" ? t("auth_onboard_hint") : t("auth_signup_hint")}
               </p>
             )}
           </form>
 
-          <div className="ornament-rule my-6 text-xs uppercase tracking-[0.3em] text-muted-foreground">
-            <span>{t("auth_or")}</span>
-          </div>
-
           {(mode === "signin" || mode === "signup") && (
-            <button
-              type="button"
-              disabled={busy}
-              onClick={signInWithGoogle}
-              className="flex w-full items-center justify-center gap-3 rounded-full border border-input bg-background px-4 py-3 font-semibold text-ink transition-colors hover:bg-muted disabled:opacity-60"
-            >
-              <svg viewBox="0 0 24 24" className="size-5" aria-hidden="true">
-                <path fill="#4285F4" d="M23.49 12.27c0-.79-.07-1.54-.19-2.27H12v4.51h6.47c-.29 1.48-1.14 2.73-2.4 3.58v3h3.86c2.26-2.09 3.56-5.17 3.56-8.82z" />
-                <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.86-3c-1.08.72-2.45 1.16-4.07 1.16-3.13 0-5.78-2.11-6.73-4.96H1.29v3.09C3.26 21.3 7.31 24 12 24z" />
-                <path fill="#FBBC05" d="M5.27 14.29c-.25-.72-.38-1.49-.38-2.29s.14-1.57.38-2.29V6.62H1.29C.47 8.24 0 10.06 0 12s.47 3.76 1.29 5.38l3.98-3.09z" />
-                <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.62l3.98 3.09c.95-2.85 3.6-4.96 6.73-4.96z" />
-              </svg>
-              {t("auth_google")}
-            </button>
+            <>
+              <div className="ornament-rule my-6 text-xs uppercase tracking-[0.3em] text-muted-foreground">
+                <span>{t("auth_or")}</span>
+              </div>
+              <button
+                type="button"
+                disabled={busy}
+                onClick={signInWithGoogle}
+                className="flex w-full items-center justify-center gap-3 rounded-full border border-input bg-background px-4 py-3 font-semibold text-ink transition-colors hover:bg-muted disabled:opacity-60"
+              >
+                <svg viewBox="0 0 24 24" className="size-5" aria-hidden="true">
+                  <path fill="#4285F4" d="M23.49 12.27c0-.79-.07-1.54-.19-2.27H12v4.51h6.47c-.29 1.48-1.14 2.73-2.4 3.58v3h3.86c2.26-2.09 3.56-5.17 3.56-8.82z" />
+                  <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.86-3c-1.08.72-2.45 1.16-4.07 1.16-3.13 0-5.78-2.11-6.73-4.96H1.29v3.09C3.26 21.3 7.31 24 12 24z" />
+                  <path fill="#FBBC05" d="M5.27 14.29c-.25-.72-.38-1.49-.38-2.29s.14-1.57.38-2.29V6.62H1.29C.47 8.24 0 10.06 0 12s.47 3.76 1.29 5.38l3.98-3.09z" />
+                  <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.62l3.98 3.09c.95-2.85 3.6-4.96 6.73-4.96z" />
+                </svg>
+                {t("auth_google")}
+              </button>
+            </>
           )}
 
-          <button
-            type="button"
-            onClick={() => { clearMessages(); setConfirmPassword(""); setMode(mode === "signin" ? "signup" : "signin"); }}
-            className="w-full text-sm text-muted-foreground underline-offset-4 hover:underline"
-          >
-            {mode === "signin" ? t("auth_new_here") : mode === "signup" ? t("auth_have_acct") : t("auth_back_to_signin")}
-          </button>
+          {mode === "onboard" ? (
+            <button
+              type="button"
+              onClick={handleOnboardSignOut}
+              className="w-full text-sm text-muted-foreground underline-offset-4 hover:underline"
+            >
+              {t("signout")}
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => { clearMessages(); setConfirmPassword(""); setMode(mode === "signin" ? "signup" : "signin"); }}
+              className="w-full text-sm text-muted-foreground underline-offset-4 hover:underline"
+            >
+              {mode === "signin" ? t("auth_new_here") : mode === "signup" ? t("auth_have_acct") : t("auth_back_to_signin")}
+            </button>
+          )}
         </div>
       </main>
     </div>
